@@ -229,7 +229,7 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 
 /* demo */
 .video { margin: 0 0 64px; display: grid; gap: 12px; }
-.video video { display: block; width: 100%; height: auto; aspect-ratio: 1400 / 680; background: var(--color-ink); border: 1px solid var(--color-ink); border-radius: 10px; }
+.video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--color-ink); border: 1px solid var(--color-ink); border-radius: 10px; }
 .try-head { display: grid; gap: 12px; max-width: 46rem; margin-bottom: 28px; padding-top: 40px; border-top: var(--rule-tear); }
 .try-head h3 { font-size: clamp(1.5rem, 2.8vw, 2rem); }
 .demo-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; margin-bottom: 22px; }
@@ -600,14 +600,14 @@ footer .brand svg { width: 28px; height: 28px; }
   <div class="wrap">
     <div class="head">
       <h2>See it work on ChatGPT</h2>
-      <p class="lead">A short recording of Ghost Agent on chatgpt.com. A patient note is pasted, the names and the fødselsnummer are hidden, and the AI writes its letter around the placeholders.</p>
+      <p class="lead">Thirty seconds with the real extension in Opera: set it up, then underline, hide and rephrase on chatgpt.com. The AI only ever sees placeholders like [PERSON_1].</p>
     </div>
     <figure class="video">
-      <video autoplay muted loop playsinline preload="auto" poster="assets/demo-poster.jpg" width="1400" height="680" aria-describedby="videoCap">
+      <video autoplay muted loop playsinline preload="auto" poster="assets/demo-poster.jpg" width="1920" height="1080" aria-describedby="videoCap">
         <source src="assets/demo.mp4" type="video/mp4">
         <p>Your browser can't play this video. <a href="assets/demo.mp4">Download the recording</a> instead.</p>
       </video>
-      <figcaption class="muted sm" id="videoCap">Recorded with the synthetic demo note. No real patient data was used.</figcaption>
+      <figcaption class="muted sm" id="videoCap">Recorded with made-up names and numbers. No real personal data was used.</figcaption>
     </figure>
     <div class="try-head" id="try">
       <h3>Now try it yourself</h3>
