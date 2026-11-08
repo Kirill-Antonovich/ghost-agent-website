@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="en"><head><meta charset=utf8><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Ghost Agent</title>
 <meta name="description" content="Ghost Agent underlines sensitive data while you write to an AI chat, and lets you hide or rephrase it before you send. Everything runs on your own machine. Built by Marka.">
 <meta property="og:title" content="Ghost Agent">
@@ -94,6 +94,17 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 700 1.2rem var(--font-head); letter-spacing: -.02em; }
 .brand svg { width: 34px; height: 34px; flex: none; }
+/* Same move as the extension popup's ghost, scaled from 28px to 34px: the sunglasses fade in
+   on top of the head, then slide down the forehead and stand up over the eyes. Plays once. */
+.brand-ghost { position: relative; width: 34px; height: 34px; flex: none; }
+.brand-ghost svg { position: absolute; inset: 0; }
+.brand-glasses { transform-origin: 50% 55%; animation: glasses-on 450ms ease-in-out 600ms backwards; }
+@keyframes glasses-on {
+  from { opacity: 0; transform: perspective(49px) translateY(-10px) rotateX(60deg); }
+  33% { opacity: 1; }
+  to { transform: perspective(49px) translateY(0) rotateX(0deg); }
+}
+@media (prefers-reduced-motion: reduce) { .brand-glasses { animation: none; } }
 .nav { display: flex; align-items: center; gap: 22px; }
 .nav a:not(.btn) { text-decoration: none; color: var(--color-ink-2); font-size: .98rem; transition: color var(--dur-micro) var(--ease-out); }
 .nav a:not(.btn):hover { color: var(--color-stamp); }
@@ -182,7 +193,8 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .hero-copy { display: grid; gap: 24px; justify-items: start; }
 .hero-copy .lead { max-width: 33rem; font-size: 1.22rem; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; }
-.mock { display: grid; gap: 12px; padding-bottom: 44px; min-width: 0; }
+.mock { display: grid; gap: 12px; min-width: 0; }
+.hero-note { margin: 16px 0 0 22px; }
 @media (max-width: 560px) { .mock { gap: 42px; } }
 .mock .card { margin-left: 22px; }
 .mock .field { min-height: 0; }
@@ -225,9 +237,6 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .chat { max-width: 860px; display: grid; gap: 18px; }
 .thread { display: grid; gap: 14px; }
 .thread-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
-.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--color-paper-2); }
-.seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 7px; background: none; color: var(--color-muted); font: 500 .95rem var(--font-body); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
-.seg button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-paper-2); }
 .msg { border-radius: 10px; padding: 14px 16px; max-width: 92%; min-width: 0; }
 .msg.you { background: var(--color-paper-3); justify-self: end; }
 .msg.ai { background: var(--color-paper-2); border: 1px solid var(--rule); }
@@ -274,49 +283,108 @@ td:first-child { font-weight: 500; white-space: nowrap; }
 .pop-feats li:last-child { border-bottom: var(--rule-tear); }
 .pop-feats strong { font-weight: 500; }
 .stage { background: var(--color-paper-3); border-radius: 6px; padding: 22px; display: grid; gap: 16px; justify-items: center; min-width: 0; }
-.stage .seg { justify-self: center; }
-.tbar { width: min(330px, 100%); display: flex; align-items: center; gap: 10px; background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 10px; padding: 6px 8px 6px 12px; }
-.tbar .url { flex: 1; min-width: 0; font: 400 .88rem var(--font-mono); color: var(--color-muted); background: var(--color-paper); border-radius: 6px; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tbar .ext { position: relative; width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--color-paper-3); flex: none; }
-.tbar .ext svg { width: 24px; height: 24px; }
-.tbar .badge { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 4px; background: var(--color-cat-id); color: #fff; font: 500 .75rem/17px var(--font-body); text-align: center; }
-.pop { width: min(330px, 100%); background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow-lift); font-size: .95rem; position: relative; }
-.pop::before { content: ""; position: absolute; top: -7px; right: 20px; width: 12px; height: 12px; background: var(--color-paper-2); border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); transform: rotate(45deg); }
-.pop-head { display: flex; align-items: center; gap: 9px; padding: 14px 14px 12px; border-bottom: var(--rule-tear); }
-.pop-head svg { width: 26px; height: 26px; flex: none; }
-.pop-head strong { font: 700 1.05rem var(--font-head); letter-spacing: -.01em; flex: 1; }
-.st { font-size: .8rem; padding: 3px 8px; border-radius: 4px; background: var(--color-paper-3); color: var(--color-ink-2); white-space: nowrap; }
-.st.down { background: var(--color-ink); color: var(--color-paper-2); }
-.pop-body { padding: 12px 14px 14px; display: grid; gap: 12px; }
-.prow { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--color-paper-3); border-radius: 6px; padding: 8px 8px 8px 12px; }
-.prow .site { font-size: .92rem; overflow-wrap: anywhere; }
-.prow .site .mono { font-size: .88rem; }
-.prow-r { display: flex; align-items: center; gap: 6px; flex: none; }
-.sw { width: 38px; height: 22px; border-radius: 11px; border: 0; padding: 0; background: var(--rule-strong); position: relative; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
-.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-paper-2); transition: transform var(--dur-micro) var(--ease-out); }
-.sw[aria-checked="true"] { background: var(--color-accent); }
-.sw[aria-checked="true"]::after { transform: translateX(16px); }
-.ibtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--rule); background: var(--color-paper-2); color: var(--color-ink); display: grid; place-items: center; cursor: pointer; padding: 0; transition: background-color var(--dur-micro) var(--ease-out); }
-.ibtn:hover { background: var(--color-paper-3); }
-.ibtn svg { width: 16px; height: 16px; }
-.plabel { font-size: .82rem; color: var(--color-muted); display: block; margin-bottom: 5px; }
-.drow { display: flex; gap: 6px; }
-.psel { flex: 1; min-width: 0; height: 32px; border: 1px solid var(--rule); border-radius: 8px; background: var(--color-paper-2); color: var(--color-ink); font: 400 .92rem var(--font-body); padding: 0 8px; }
-.wchips { display: flex; flex-wrap: wrap; gap: 6px; }
-.wchip { font-size: .86rem; padding: 3px 4px 3px 9px; border-radius: 6px; background: var(--tint-domain); display: inline-flex; align-items: center; gap: 2px; }
-.wchip.fixed { padding-right: 9px; }
-.wchip button { border: 0; background: none; color: var(--color-ink-2); cursor: pointer; width: 20px; height: 20px; border-radius: 4px; font: 400 1rem/1 var(--font-body); padding: 0; }
-.wchip button:hover { background: rgba(12, 122, 120, .2); }
-.addrow { display: flex; gap: 6px; margin-top: 8px; }
-.addrow input { flex: 1; min-width: 0; height: 34px; border: 1px solid var(--rule); border-radius: 8px; background: var(--color-paper); font: 400 .92rem var(--font-body); padding: 0 10px; color: var(--color-ink); }
-.addrow .btn-sm { height: 34px; }
-.backrow { display: flex; align-items: center; gap: 8px; }
-.backrow .btn-text { padding: 0 6px; height: 30px; }
-.sites { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.sites li { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--color-paper-3); border-radius: 6px; padding: 6px 6px 6px 12px; }
-.sites .mono { font-size: .88rem; }
-.downbox { display: grid; gap: 10px; }
-.downbox pre { font-size: .8rem; padding: 10px 12px; }
+/* The popup illustration copies the real extension popup (extension/entrypoints/popup): same
+   layout, sizes and behaviour, drawn with this page's tokens. Every class starts with xp-. */
+.xp { width: min(330px, 100%); background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow-lift); position: relative; font: 400 15px/1.4 var(--font-body); color: var(--color-ink); text-align: left; }
+:where(.xp) h3, :where(.xp) p { margin: 0; }
+:where(.xp) button, :where(.xp) input, :where(.xp) select { font: inherit; }
+:where(.xp) button { cursor: pointer; }
+.xp button:focus-visible, .xp select:focus-visible { outline: 2px solid var(--color-stamp); outline-offset: 2px; }
+.xp button:disabled { cursor: not-allowed; opacity: .45; }
+.xp svg { display: block; }
+.xp-header { display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; }
+.xp-header--sub { gap: 8px; padding: 14px 16px; }
+.xp-title { font: 700 18px/1.05 var(--font-head); letter-spacing: -.02em; }
+.xp-chip { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: var(--color-paper-3); color: var(--color-ink-2); font-size: 13px; font-weight: 500; }
+.xp-tear { border-top: var(--rule-tear); }
+.xp-section { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.xp-section--top { padding-top: 0; }
+.xp-section--loose { gap: 14px; }
+.xp-stack { display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 14px; }
+.xp-stack--top { padding: 0 16px 16px; }
+.xp-row { display: flex; gap: 8px; }
+.xp-row--center { align-items: center; gap: 10px; }
+.xp-label { font-size: 14px; font-weight: 500; color: var(--color-muted); }
+.xp-label-row { display: flex; align-items: center; gap: 4px; }
+/* "?" by the Domain label: its tooltip shows on hover, and on keyboard focus. */
+.xp-info { position: relative; display: flex; }
+.xp-info__btn { display: flex; padding: 2px; border: 0; border-radius: 999px; background: transparent; color: var(--color-muted); cursor: help !important; }
+.xp-info__btn:hover { color: var(--color-ink); }
+.xp-info__btn svg { width: 15px; height: 15px; }
+.xp-tip { position: absolute; bottom: calc(100% + 6px); left: -60px; z-index: 1; display: none; width: 240px; padding: 8px 10px; border-radius: 8px; background: var(--color-accent); color: var(--color-paper); font-size: 13px; line-height: 1.45; }
+.xp-info:hover .xp-tip, .xp-info__btn:focus-visible + .xp-tip { display: block; }
+.xp-tip span { display: block; margin-top: 4px; }
+.xp-hint { font-size: 13px; line-height: 1.5; color: var(--color-muted); }
+.xp-body { line-height: 1.5; color: var(--color-ink-2); }
+.xp-body--sm { font-size: 14px; }
+.xp-heading-row { display: flex; justify-content: space-between; align-items: baseline; }
+.xp-heading { font: 500 15px/1.4 var(--font-body); letter-spacing: 0; }
+.xp-pill { padding: 2px 8px; border: 1px solid var(--rule-strong); border-radius: 999px; font-size: 13px; color: var(--color-muted); }
+.xp-muted { color: var(--color-muted); }
+/* Site row */
+.xp-site { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 12px; background: var(--color-paper-3); border-radius: 10px; }
+.xp-site__text { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+.xp-host { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Switch: 44×26, black when on, 20px knob that slides 18px. It animates only after a click. */
+.xp-switch { display: flex; flex-shrink: 0; width: 44px; height: 26px; padding: 3px; border: 0; border-radius: 999px; background: var(--color-muted); }
+.xp-switch[aria-checked="true"] { background: var(--color-accent); }
+.xp-switch:hover { background: var(--color-ink-2); }
+.xp-switch[aria-checked="true"]:hover { background: #000; }
+.xp-switch--animate { transition: background-color 150ms ease-in-out; }
+.xp-knob { width: 20px; height: 20px; border-radius: 999px; background: var(--color-paper-2); }
+.xp-switch[aria-checked="true"] .xp-knob { transform: translateX(18px); }
+.xp-switch--animate .xp-knob { transition: transform 150ms ease-in-out; }
+/* Outlined icon button: Settings (36px) and New Domain (42px) */
+.xp-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; padding: 0; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--color-paper-2); color: var(--color-ink-2); }
+.xp-icon svg { width: 16px; height: 16px; }
+.xp-icon--lg { width: 42px; height: 42px; }
+.xp-icon--lg svg { width: 18px; height: 18px; }
+.xp-icon:hover { background: var(--color-paper-3); color: var(--color-ink); }
+/* Bare icon button: Back arrow, remove × */
+.xp-bare { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--color-ink-2); }
+.xp-bare svg { width: 18px; height: 18px; }
+.xp-bare:hover { background: var(--color-paper-3); color: var(--color-ink); }
+.xp-bare--muted { margin-left: auto; color: var(--color-muted); }
+.xp-bare--muted svg { width: 14px; height: 14px; }
+.xp-bare--muted:hover { background: var(--rule); }
+/* Fields */
+.xp-select, .xp-input { flex-grow: 1; min-width: 0; height: 42px; padding: 0 12px; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--color-paper-2); color: var(--color-ink); font-size: 15px; }
+.xp-select { appearance: none; padding-right: 36px; background: var(--color-paper-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235F5B50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; font-weight: 500; cursor: pointer; }
+.xp-select:hover, .xp-input:hover { border-color: var(--color-muted); }
+.xp-input--sm { height: 40px; }
+.xp-input--search { height: 34px; padding-left: 34px; border-color: transparent; border-radius: 999px; background: var(--color-paper-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235F5B50' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat left 12px center; font-size: 14px; }
+.xp-input--strong { font-weight: 500; }
+.xp-input::placeholder { color: var(--color-muted); }
+.xp-input:focus { outline: none; padding: 0 11px; border: 2px solid var(--color-stamp); }
+.xp-input--search:focus { padding-left: 33px; }
+.xp-input[aria-invalid="true"] { border-color: var(--color-cat-id); }
+.xp-error { font-size: 13px; color: var(--color-cat-id); }
+/* Primary button: black, moulded, sinks 3px on press */
+.xp-btn { height: 40px; padding: 0 16px; border: 1px solid #000; border-radius: 10px; background: var(--color-accent); color: var(--color-paper-2); box-shadow: var(--shadow-mould); font-size: 14px; font-weight: 500; }
+.xp-btn--block { height: 42px; font-size: 15px; }
+.xp-btn:hover:not(:disabled) { background: #000; }
+.xp-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+/* Word chips: about four rows, then the list scrolls */
+.xp-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 140px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.xp-chips::-webkit-scrollbar { width: 6px; }
+.xp-chips::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 999px; }
+.xp-word { display: inline-flex; align-items: center; gap: 2px; height: 30px; padding: 0 4px 0 12px; border-radius: 999px; background: var(--tint-domain); color: #0A5654; font-size: 14px; font-weight: 500; max-width: 100%; }
+.xp-word span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xp-word button { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: transparent; color: inherit; }
+.xp-word button svg { width: 12px; height: 12px; }
+.xp-word button:hover { background: rgba(12, 122, 120, .2); }
+/* Settings: sites list */
+.xp-sites { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.xp-site-item { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 12px; background: var(--color-paper-3); border-radius: 10px; }
+.xp-sites-head { display: flex; flex-direction: column; gap: 2px; }
+/* The popup ghost: the extension's 28px ghost and its sunglasses move */
+.pghost { position: relative; width: 28px; height: 28px; flex: none; }
+.pghost > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pglasses { transform-origin: 50% 55%; transform: perspective(40px) translateY(0) rotateX(0deg); transition: opacity 150ms ease-out, transform 450ms ease-in-out; }
+.pglasses.off { opacity: 0; transform: perspective(40px) translateY(-8px) rotateX(60deg); transition: none; }
+.pdust { pointer-events: none; }
+.pgrain { animation: ghost-dust 320ms cubic-bezier(0.55, 0, 1, 0.45) var(--delay) forwards; }
+@keyframes ghost-dust { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
 @media (max-width: 860px) { .popsec { grid-template-columns: 1fr; gap: 32px; } .stage { padding: 16px 12px; } }
 
 /* compare */
@@ -332,6 +400,11 @@ td:first-child { font-weight: 500; white-space: nowrap; }
 .cmp .y { font-weight: 500; }
 .cmp .n, .cmp .na { color: var(--color-muted); }
 @media (max-width: 860px) { .why { grid-template-columns: 1fr; } }
+.plans ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; }
+.domains { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.domains .panel.next { background: none; border: 1.5px dashed var(--rule-strong); }
+@media (max-width: 860px) { .domains { grid-template-columns: 1fr; } }
+.plans .price { font: 700 1.6rem/1 var(--font-head); }
 
 /* install */
 .inst { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; align-items: start; }
@@ -392,6 +465,10 @@ pre { margin: 0; font: 400 .84rem/1.65 var(--font-mono); background: var(--color
 .later li::before { border-top-style: dashed; border-top-color: var(--color-muted); }
 .limits { margin-top: 44px; border: 1.5px dashed var(--rule-strong); border-radius: 6px; padding: 20px 22px; display: grid; gap: 10px; }
 .limits ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; }
+.law-head { display: flex; align-items: center; gap: 10px; }
+.law-head .flag { width: 28px; height: auto; flex: none; border-radius: 2px; box-shadow: 0 0 0 1px var(--rule); }
+.refs { margin: 4px 0 0; padding: 12px 0 0 1.4rem; border-top: var(--rule-tear); display: grid; gap: 4px; font-size: .82rem; color: var(--color-muted); }
+.refs a { color: inherit; overflow-wrap: anywhere; }
 @media (max-width: 860px) {
   .track { grid-template-columns: 1fr; }
   .stop { padding: 0 0 40px 50px; }
@@ -426,10 +503,19 @@ footer .brand svg { width: 28px; height: 28px; }
     <clipPath id="gclip"><use href="#gp"/></clipPath>
     <linearGradient id="gbody" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF1F6"/></linearGradient>
     <linearGradient id="ggloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
-    <symbol id="ghost" viewBox="0 0 512 512">
+    <!-- The ghost is two parts, so the header logo and the popup can put its sunglasses on, like the extension -->
+    <symbol id="ghost-bare" viewBox="0 0 512 512">
       <use href="#gp" fill="url(#gbody)"/>
       <g clip-path="url(#gclip)"><path d="M120 210 C120 128 180 74 256 74 C332 74 392 128 392 210 C340 176 172 176 120 210 Z" fill="url(#ggloss)"/></g>
       <use href="#gp" fill="none" stroke="#0A0B0F" stroke-width="14" stroke-linejoin="round"/>
+      <ellipse cx="200" cy="228" rx="24" ry="34" fill="#0A0B0F"/>
+      <ellipse cx="312" cy="228" rx="24" ry="34" fill="#0A0B0F"/>
+    </symbol>
+    <symbol id="ghost" viewBox="0 0 512 512">
+      <use href="#ghost-bare"/>
+      <use href="#ghost-glasses"/>
+    </symbol>
+    <symbol id="ghost-glasses" viewBox="0 0 512 512">
       <g fill="#0A0B0F" stroke="#0A0B0F" stroke-linejoin="round" stroke-linecap="round">
         <path d="M126 192 C126 180 136 172 150 172 L362 172 C376 172 386 180 386 192" fill="none" stroke-width="16"/>
         <rect x="240" y="170" width="32" height="30" stroke="none"/>
@@ -453,22 +539,25 @@ footer .brand svg { width: 28px; height: 28px; }
         <rect x="137" y="142" width="6" height="32"/>
       </g>
     </symbol>
-    <symbol id="gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></symbol>
+    <!-- Settings and Back: the same icons as the extension popup -->
+    <symbol id="gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></g></symbol>
+    <symbol id="back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></g></symbol>
+    <symbol id="help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></g></symbol>
     <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#top" id="top"><svg role="img" aria-label="Ghost Agent logo"><use href="#ghost"/></svg>Ghost Agent</a>
+    <a class="brand" href="#top" id="top"><span class="brand-ghost" role="img" aria-label="Ghost Agent logo"><svg aria-hidden="true"><use href="#ghost-bare"/></svg><svg class="brand-glasses" aria-hidden="true"><use href="#ghost-glasses"/></svg></span>Ghost Agent</a>
     <nav class="nav" aria-label="Sections">
       <a href="#demo">Demo</a>
       <a href="#how">How it works</a>
       <a href="#privacy">Privacy</a>
       <a href="#compare">Compare</a>
-      <a href="#install">Install</a>
-      <a href="#roadmap">Roadmap</a>
-      <a class="btn btn-primary btn-sm" href="#try">Try the demo</a>
+      <a href="#pricing">Pricing</a>
+      <a class="btn btn-primary btn-sm" href="#install">Get Ghost Agent</a>
     </nav>
   </div>
 </header>
@@ -481,20 +570,28 @@ footer .brand svg { width: 28px; height: 28px; }
       <h1>Catch sensitive data before the AI sees it.</h1>
       <p class="lead">Ghost Agent underlines personal and confidential data while you type or paste into an AI chat. Hide it or rephrase it before you press Send. All the checking runs on your own machine.</p>
       <div class="cta">
-        <a class="btn btn-primary" href="#try">Try the demo</a>
-        <a class="btn btn-secondary" href="#install">Install it</a>
+        <a class="btn btn-primary" href="#install">Get Ghost Agent</a>
+        <a class="btn btn-secondary" href="#try">Try the demo</a>
       </div>
-      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in any Chromium browser, on any site. Besides names, IDs and contact details, it recognises sensitive terms from health, education, courts, industry and religious life.</span></p>
+      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Made by Marka. Free for personal use.</span></p>
     </div>
-    <div class="mock" style="position:relative" role="group" aria-label="Interactive example of Ghost Agent in a message field">
-      <div style="min-height:152px;display:grid;align-items:end"><div class="card" id="heroCard"></div></div>
-      <div class="box">
-        <p class="field" id="heroField"></p>
-        <div class="foot"><span class="hint">Message the AI</span><span class="btn btn-primary btn-sm" aria-hidden="true">Send</span></div>
-        <div class="gbar" aria-hidden="true"><span class="gtab"><span class="n" id="heroCount">5</span> to check</span></div>
+    <div style="min-width:0">
+    <div class="mock" style="pointer-events:none" role="img" aria-label="Example: Ghost Agent underlines a fødselsnummer in a message to an AI and offers to hide it as [FNR_1]">
+      <div style="min-height:152px;display:grid;align-items:end" aria-hidden="true">
+        <div class="card">
+          <span class="catname ul red">Fødselsnummer</span>
+          <div class="val-row"><span class="val">01019000083</span><span class="stamp">hide as <b>[FNR_1]</b></span></div>
+          <hr class="tear">
+          <div class="acts"><span class="btn btn-primary btn-sm">Hide</span><span class="btn btn-secondary btn-sm">Rephrase</span><span class="btn btn-text btn-sm">Ignore</span></div>
+        </div>
       </div>
-      <button class="btn btn-text btn-sm" type="button" id="heroReset" hidden style="position:absolute;left:0;bottom:0;padding-left:0">Reset example</button>
-      <p class="sr" role="status" id="heroStatus"></p>
+      <div class="box" aria-hidden="true">
+        <p class="field">Pasienten heter <span class="ul amber">Kari Nordmann</span>, fnr <span class="ul red hov">01019000083</span>. <span class="ul amber">Kari</span>, 34 år, jobber som lærer i <span class="ul teal">Bærum</span> og har <span class="ul teal">diabetes</span> type 1.</p>
+        <div class="foot"><span class="hint">Message the AI</span><span class="btn btn-primary btn-sm">Send</span></div>
+        <div class="gbar"><span class="gtab"><span class="n">5</span> to check</span></div>
+      </div>
+    </div>
+    <p class="muted sm hero-note">Example only, for reference. <a href="#try">Try the live demo</a> below.</p>
     </div>
   </div>
 </section>
@@ -504,7 +601,7 @@ footer .brand svg { width: 28px; height: 28px; }
   <div class="wrap">
     <div class="head">
       <h2>See it work on ChatGPT</h2>
-      <p class="lead">A short screen recording of the real extension on chatgpt.com, with the Engine running on the same computer. The demo note is pasted, the names and the fødselsnummer are hidden, and the AI writes its letter around the Placeholders.</p>
+      <p class="lead">A short recording of Ghost Agent on chatgpt.com. A patient note is pasted, the names and the fødselsnummer are hidden, and the AI writes its letter around the placeholders.</p>
     </div>
     <figure class="video">
       <video autoplay muted loop playsinline preload="auto" poster="assets/demo-poster.jpg" width="1400" height="680" aria-describedby="videoCap">
@@ -559,22 +656,22 @@ footer .brand svg { width: 28px; height: 28px; }
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">1</span>
           <h3>Underline</h3>
-          <p>Ghost Agent checks the field 300 ms after your last keystroke, or at once on paste. Each sensitive value gets a wavy underline in the colour of its Category. The site's own editor is never changed.</p>
+          <p>Ghost Agent checks your message as you type, and at once when you paste. Each sensitive value gets a wavy underline, coloured by how sensitive it is. The chat site itself is never changed.</p>
         </div>
         <div class="vis">
           <p>fnr <span class="ul red">01019000083</span>, <span class="ul amber">Kari</span> har <span class="ul teal">diabetes</span></p>
           <div class="legend">
             <span class="ul red">IDs, cards, secrets</span>
             <span class="ul amber">Names and contact data</span>
-            <span class="ul teal">Domain words and your own words</span>
+            <span class="ul teal">Sector terms and your own words</span>
           </div>
         </div>
       </li>
       <li class="step">
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">2</span>
-          <h3>Open the Card</h3>
-          <p>Hover an underlined value and a Card opens above it. It names the Category, shows the Placeholder that would replace the value, and offers three choices: Hide, Rephrase or Ignore.</p>
+          <h3>Open the card</h3>
+          <p>Hover an underlined value and a small card opens above it. It says what kind of data it is, shows the placeholder that would replace it, and offers three choices: Hide, Rephrase or Ignore.</p>
         </div>
         <div class="vis">
           <div class="card">
@@ -593,7 +690,7 @@ footer .brand svg { width: 28px; height: 28px; }
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">3</span>
           <h3>Hide</h3>
-          <p>Hide swaps one value for a typed, numbered Placeholder. The same value always gets the same Placeholder, so the AI can tell two people apart. Hide all does the whole field in one step.</p>
+          <p>Hide swaps the value for a placeholder like [FNR_1]. The same value always gets the same placeholder, so the AI can still tell two people apart. Hide all cleans the whole message in one click.</p>
         </div>
         <div class="vis">
           <div class="swap"><span>fnr <span class="ul red">01019000083</span></span><span class="arrow" aria-hidden="true">→</span><span>fnr [FNR_1]</span></div>
@@ -609,7 +706,7 @@ footer .brand svg { width: 28px; height: 28px; }
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">4</span>
           <h3>Rephrase</h3>
-          <p>Rephrase rewrites the whole sentence into a more general one, using a small language model that runs on your computer. You read the new sentence first and choose Accept or Reject.</p>
+          <p>Rephrase rewrites the sentence in more general words, using a small AI model that runs on your own computer. You read the new sentence first and choose Accept or Reject.</p>
         </div>
         <div class="vis">
           <p class="strike">Kari, 34 år, jobber som lærer i Bærum og har diabetes type 1.</p>
@@ -624,7 +721,7 @@ footer .brand svg { width: 28px; height: 28px; }
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">5</span>
           <h3>Read the answer</h3>
-          <p>The AI answers with the same Placeholders, such as <span class="ph">[PERSON_1]</span>, so its answer keeps the structure of your text. The originals wait in the Vault, which lives in memory for this tab only.</p>
+          <p>The AI answers with the same placeholders, such as <span class="ph">[PERSON_1]</span>, so its answer still makes sense. The real values stay in your browser tab and are forgotten when you close it.</p>
         </div>
         <div class="vis">
           <p class="muted sm">The AI's answer</p>
@@ -640,31 +737,29 @@ footer .brand svg { width: 28px; height: 28px; }
   <div class="wrap priv">
     <div class="priv-copy">
       <h2>Ghost Agent never sends your text anywhere.</h2>
-      <p class="lead">Ghost Agent exists to keep sensitive data away from third-party services, so it must not send that data anywhere itself. This is a hard rule, even where a cloud model would be better or faster.</p>
+      <p class="lead">Ghost Agent exists to keep sensitive data away from other companies' servers, so it never sends your data anywhere itself. Not to the cloud, and not to us.</p>
       <ul class="priv-list">
-        <li>Detection and Rephrase both run on your computer.</li>
-        <li>No cloud APIs and no usage tracking.</li>
-        <li>No logging of your text, not even debug logs.</li>
-        <li>The Engine listens on <span class="mono">127.0.0.1</span> only.</li>
-        <li>The Vault lives in memory and is cleared when the browser closes.</li>
+        <li>Checking and rephrasing both happen on your computer.</li>
+        <li>No cloud services and no usage tracking.</li>
+        <li>Your text is never logged or saved.</li>
+        <li>The real values you hide are kept in memory and cleared when you close the browser.</li>
       </ul>
     </div>
     <svg class="diagram" viewBox="0 0 460 340" role="img" aria-labelledby="dtitle ddesc">
       <title id="dtitle">Where your text travels</title>
-      <desc id="ddesc">The browser extension talks to the local engine on localhost. A crossed-out dashed arrow from the engine to a third-party cloud shows that no text is sent there.</desc>
+      <desc id="ddesc">The browser extension and the Ghost Agent checker both run on your computer. A crossed-out dashed arrow to a third-party cloud shows that no text is sent there.</desc>
       <rect class="zone" x="10" y="10" width="440" height="212" rx="14"/>
       <text class="t tb" x="28" y="40">Your computer</text>
       <rect class="box1" x="30" y="62" width="170" height="130" rx="8"/>
       <text class="t tb" x="46" y="94">Browser extension</text>
-      <text class="t ts" x="46" y="120">Underlines, Card,</text>
-      <text class="t ts" x="46" y="140">Ghost bar, Vault</text>
+      <text class="t ts" x="46" y="120">Underlines and</text>
+      <text class="t ts" x="46" y="140">quick actions</text>
       <rect class="box1" x="260" y="62" width="170" height="130" rx="8"/>
-      <text class="t tb" x="276" y="94">Local engine</text>
-      <text class="tm" x="276" y="120">127.0.0.1:8765</text>
-      <text class="t ts" x="276" y="140">Detect, Rephrase</text>
+      <text class="t tb" x="276" y="94">Ghost Agent checker</text>
+      <text class="t ts" x="276" y="120">Finds sensitive data,</text>
+      <text class="t ts" x="276" y="140">rephrases sentences</text>
       <line class="ln" x1="204" y1="127" x2="254" y2="127"/>
       <path class="head" d="M258 127 L249 122 L249 132 Z"/>
-      <text class="t ts" x="230" y="114" text-anchor="middle">HTTP</text>
       <line class="dash" x1="345" y1="196" x2="345" y2="276"/>
       <circle class="bg" cx="345" cy="244" r="15"/>
       <line class="cross" x1="337" y1="236" x2="353" y2="252"/>
@@ -680,30 +775,43 @@ footer .brand svg { width: 28px; height: 28px; }
 <section class="sec" id="finds">
   <div class="wrap">
     <div class="head">
-      <h2>What it finds</h2>
-      <p class="lead">Each Finding comes from a Detector on your computer. Numbers must pass their checksum, so an order number like <code>ordrenummer 01019000084</code> is left alone.</p>
+      <h2>Domains for your field</h2>
+      <p class="lead">A Domain is a set of sensitive terms for one line of work, made by Marka. Pick yours, and Ghost Agent knows what matters in your field.</p>
     </div>
-    <div class="scroll">
-      <table>
-        <thead><tr><th scope="col">Category</th><th scope="col">How it is found</th><th scope="col">Placeholder</th><th scope="col">Underline</th></tr></thead>
-        <tbody>
-          <tr><td>Fødselsnummer</td><td>11 digits, valid mod-11 checksum, first digit 0–3</td><td class="ph">[FNR_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>D-nummer</td><td>Same checks, first digit 4–7</td><td class="ph">[DNR_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>Bank account</td><td>11 digits, valid mod-11 checksum, optional 4.2.5 grouping</td><td class="ph">[ACCOUNT_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>Payment card</td><td>13–19 digits, valid Luhn checksum</td><td class="ph">[CARD_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>IBAN</td><td>Country code, check digits and account, valid mod-97</td><td class="ph">[IBAN_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>Secret</td><td>Keys starting <code>sk-</code>, <code>ghp_</code> or <code>AKIA</code>, and JWTs</td><td class="ph">[SECRET_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>Password</td><td>The value after <code>password:</code>, <code>passord:</code>, <code>pwd:</code> or <code>pw:</code></td><td class="ph">[PASSWORD_n]</td><td><span class="ul red">red</span></td></tr>
-          <tr><td>Email address</td><td>Any email address</td><td class="ph">[EMAIL_n]</td><td><span class="ul amber">amber</span></td></tr>
-          <tr><td>Phone number</td><td>Norwegian 8-digit numbers with optional +47 or 0047, and international + numbers</td><td class="ph">[PHONE_n]</td><td><span class="ul amber">amber</span></td></tr>
-          <tr><td>Person name</td><td>A capitalised word on the SSB first-name list</td><td class="ph">[PERSON_n]</td><td><span class="ul amber">amber</span></td></tr>
-          <tr><td>Health</td><td>Diagnoses, medicines and terms like innlagt and sykemeldt, in Bokmål and English</td><td class="ph">[HEALTH_n]</td><td><span class="ul teal">teal</span></td></tr>
-        </tbody>
-      </table>
+    <div class="domains">
+      <div class="panel">
+        <h3>Health</h3>
+        <p>For clinics, hospitals and care workers.</p>
+        <div class="chips"><span class="chip">diagnoses</span><span class="chip">medicines</span><span class="chip">sykemeldt</span><span class="chip">innlagt</span></div>
+      </div>
+      <div class="panel">
+        <h3>Education</h3>
+        <p>For schools, teachers and school services.</p>
+        <div class="chips"><span class="chip">IOP</span><span class="chip">fravær</span><span class="chip">sakkyndig vurdering</span></div>
+      </div>
+      <div class="panel">
+        <h3>Courts</h3>
+        <p>For lawyers, courts and case workers.</p>
+        <div class="chips"><span class="chip">lukkede dører</span><span class="chip">utkast til dom</span><span class="chip">samvær</span></div>
+      </div>
+      <div class="panel">
+        <h3>Industrial</h3>
+        <p>For factories, suppliers and engineers.</p>
+        <div class="chips"><span class="chip">machine makers</span><span class="chip">production capacity</span></div>
+      </div>
+      <div class="panel">
+        <h3>Religious</h3>
+        <p>For churches, faith groups and chaplains.</p>
+        <div class="chips"><span class="chip">sjelesorg</span><span class="chip">forbønn</span></div>
+      </div>
+      <div class="panel next">
+        <h3>Your field next</h3>
+        <p>Missing a Domain for your work? Tell us your sector and we will make one. Or build your own from the toolbar with words only you know.</p>
+        <div><a class="btn btn-secondary btn-sm" href="https://github.com/dimassolt/marka_mvp_2/issues" target="_blank" rel="noopener noreferrer">Ask for a Domain</a></div>
+      </div>
     </div>
     <div class="note-box">
-      <p class="sm muted">The Health row belongs to the Health Domain. In the Free Domain, which is the default, only the Base Categories above it are found.</p>
-      <p class="sm muted">On top of these rules, the GLiNER Detector, a small language model running on your computer, finds surnames, places and addresses that no list or checksum can catch.</p>
+      <p class="sm muted">Every Domain also finds the basics: names, fødselsnummer, bank accounts, cards, passwords, emails and phone numbers.</p>
     </div>
   </div>
 </section>
@@ -718,84 +826,93 @@ footer .brand svg { width: 28px; height: 28px; }
       </div>
       <ul class="pop-feats">
         <li><strong>A switch per site</strong><span class="muted sm">Turn Ghost Agent off on a site you trust, and back on with one click.</span></li>
-        <li><strong>Domains</strong><span class="muted sm">Free finds the Base Categories. Health, Education, Courts, Industrial and Religious each add the sensitive terms of that sector. Make your own with the plus button.</span></li>
-        <li><strong>Your own words</strong><span class="muted sm">Add client names, project code names or places the Detectors can't know. They get a teal underline, like Domain words.</span></li>
-        <li><strong>Engine status</strong><span class="muted sm">If the local Engine isn't running, the icon shows a red <b>!</b> and the popup tells you how to start it.</span></li>
+        <li><strong>Domains for your work</strong><span class="muted sm">Pick your field: Health, Education, Courts, Industrial or Religious each add the sensitive terms of that sector. Or make your own with the plus button.</span></li>
+        <li><strong>Your own words</strong><span class="muted sm">Add client names, project code names or places only you know about. They get a teal underline too.</span></li>
+        <li><strong>Block sending</strong><span class="muted sm">Turn it on in Settings and Send waits until every underlined value is hidden or ignored. Nothing slips out by accident.</span></li>
       </ul>
     </div>
     <div class="stage">
-      <div class="seg" role="group" aria-label="Choose a popup view">
-        <button type="button" data-show="domain" aria-pressed="true">Domain</button>
-        <button type="button" data-show="settings" aria-pressed="false">Settings</button>
-        <button type="button" data-show="down" aria-pressed="false">Engine down</button>
-      </div>
-      <div class="tbar" aria-hidden="true">
-        <span class="url">chatgpt.com</span>
-        <span class="ext"><svg><use href="#ghost"/></svg><span class="badge" id="badge" hidden>!</span></span>
-      </div>
-      <div class="pop" id="pop" role="group" aria-label="Ghost Agent popup, interactive illustration">
-        <div class="pop-head">
-          <svg aria-hidden="true"><use href="#ghost"/></svg>
-          <strong>Ghost Agent</strong>
-          <span class="st" id="popStatus">Engine running</span>
-        </div>
-
-        <div class="pop-body" data-view="domain">
-          <div class="prow">
-            <span class="site"><span id="siteState">On</span> for <span class="mono">chatgpt.com</span></span>
-            <span class="prow-r">
-              <button class="sw" type="button" role="switch" aria-checked="true" id="siteSwitch" aria-label="Ghost Agent on chatgpt.com"></button>
-              <button class="ibtn" type="button" data-go="settings" aria-label="Settings"><svg aria-hidden="true"><use href="#gear"/></svg></button>
-            </span>
+      <div class="xp" id="pop" role="group" aria-label="Ghost Agent popup, interactive illustration">
+        <div data-view="domain">
+          <div class="xp-header">
+            <span class="pghost" id="popGhost" aria-hidden="true"><svg><use href="#ghost-bare"/></svg><svg class="pglasses" id="popGlasses"><use href="#ghost-glasses"/></svg></span>
+            <strong class="xp-title">Ghost Agent</strong>
+            <span class="xp-chip">Running</span>
           </div>
-          <div>
-            <label class="plabel" for="domSel">Domain</label>
-            <div class="drow">
-              <select class="psel" id="domSel">
-                <option value="mine" selected>My clinic</option>
-                <option value="health">Health (built-in)</option>
-                <option value="free">Free (built-in)</option>
-                <option value="education">Education (built-in)</option>
-                <option value="courts">Courts (built-in)</option>
-                <option value="industrial">Industrial (built-in)</option>
-                <option value="religious">Religious (built-in)</option>
+          <div class="xp-site">
+            <span class="xp-site__text"><span class="xp-host">chatgpt.com</span><span class="xp-hint" id="siteState">Checking this site</span></span>
+            <button class="xp-switch" type="button" role="switch" aria-checked="true" id="siteSwitch" aria-label="On for chatgpt.com"><span class="xp-knob"></span></button>
+            <button class="xp-icon" type="button" data-go="settings" aria-label="Settings"><svg aria-hidden="true"><use href="#gear"/></svg></button>
+          </div>
+          <div class="xp-stack">
+            <div class="xp-label-row">
+              <label class="xp-label" for="domSel">Domain</label>
+              <span class="xp-info"><button class="xp-info__btn" type="button" aria-label="About this Domain" aria-describedby="domTip"><svg aria-hidden="true"><use href="#help"/></svg></button><span class="xp-tip" role="tooltip" id="domTip"></span></span>
+            </div>
+            <div class="xp-row">
+              <select class="xp-select" id="domSel">
+                <option value="free">Free</option>
+                <option value="health">Health</option>
+                <option value="education">Education</option>
+                <option value="courts">Courts</option>
+                <option value="industrial">Industrial</option>
+                <option value="religious">Religious</option>
+                <option value="My clinic" selected>My clinic</option>
               </select>
-              <button class="ibtn" type="button" aria-label="New Domain" id="newDom"><svg aria-hidden="true"><use href="#plus"/></svg></button>
+              <button class="xp-icon xp-icon--lg" type="button" data-go="new-domain" aria-label="New Domain"><svg aria-hidden="true"><use href="#plus"/></svg></button>
             </div>
           </div>
-          <div id="wordsBox">
-            <span class="plabel">Your words</span>
-            <div class="wchips" id="words"></div>
-            <form class="addrow" id="addWord">
-              <input id="wordIn" maxlength="40" placeholder="Add a word" aria-label="Add a word" autocomplete="off">
-              <button class="btn btn-secondary btn-sm" type="submit">Add</button>
+          <div class="xp-tear"></div>
+          <section class="xp-section" id="wordsBox">
+            <div class="xp-heading-row"><h3 class="xp-heading">Your words</h3><span class="xp-hint">On this computer</span></div>
+            <input type="search" class="xp-input xp-input--search" id="wordSearch" placeholder="Search your words" aria-label="Search your words" autocomplete="off" hidden>
+            <p class="xp-hint" id="noMatch" hidden>No words match.</p>
+            <ul class="xp-chips" id="words"></ul>
+            <form class="xp-row" id="addWord">
+              <input class="xp-input xp-input--sm" id="wordIn" maxlength="40" placeholder="Add a word" aria-label="Add a word" autocomplete="off">
+              <button class="xp-btn" type="submit" id="addWordBtn" disabled>Add</button>
             </form>
-          </div>
-          <p class="muted sm" id="builtinNote" hidden></p>
+          </section>
+          <section class="xp-section" id="builtinBox" hidden>
+            <div class="xp-heading-row"><span class="xp-pill">Built-in</span></div>
+            <p class="xp-body" id="builtinNote"></p>
+          </section>
         </div>
 
-        <div class="pop-body" data-view="settings" hidden>
-          <div class="backrow"><button class="btn btn-text btn-sm" type="button" data-go="domain">← Back</button><strong style="font-weight:500">Settings</strong></div>
-          <div>
-            <span class="plabel">Sites</span>
-            <ul class="sites" id="sites">
-              <li><span class="mono">* (all sites)</span><button class="btn btn-text btn-sm" type="button" data-rm>Remove</button></li>
+        <div data-view="new-domain" hidden>
+          <div class="xp-header xp-header--sub"><button class="xp-bare" type="button" data-go="domain" aria-label="Back"><svg aria-hidden="true"><use href="#back"/></svg></button><strong class="xp-title">New Domain</strong></div>
+          <form id="newDomForm">
+            <div class="xp-stack xp-stack--top">
+              <label class="xp-label" for="domName">Name</label>
+              <input class="xp-input xp-input--strong" id="domName" maxlength="40" autocomplete="off" aria-describedby="domErr">
+              <p class="xp-error" id="domErr" hidden>A Domain with this name already exists.</p>
+            </div>
+            <div class="xp-tear"></div>
+            <div class="xp-section xp-section--loose">
+              <p class="xp-body xp-body--sm">Saved on this computer only. It starts with the basic checks; you add your own words next.</p>
+              <button class="xp-btn xp-btn--block" type="submit" id="domCreate" disabled>Create</button>
+            </div>
+          </form>
+        </div>
+
+        <div data-view="settings" hidden>
+          <div class="xp-header xp-header--sub"><button class="xp-bare" type="button" data-go="domain" aria-label="Back"><svg aria-hidden="true"><use href="#back"/></svg></button><strong class="xp-title">Settings</strong></div>
+          <section class="xp-section xp-section--top">
+            <div class="xp-sites-head"><h3 class="xp-heading">Sites</h3><p class="xp-hint">Ghost Agent checks text on these sites. * means every site.</p></div>
+            <ul class="xp-sites" id="sites">
+              <li class="xp-site-item"><span class="mono">*</span><span class="xp-muted">All sites</span><button class="xp-bare xp-bare--muted" type="button" data-rm aria-label="Remove *"><svg aria-hidden="true"><use href="#x"/></svg></button></li>
             </ul>
-            <form class="addrow" id="addSite">
-              <input id="siteIn" maxlength="60" placeholder="claude.ai, or * for all" aria-label="Add a site" autocomplete="off">
-              <button class="btn btn-secondary btn-sm" type="submit">Add</button>
+            <form class="xp-row" id="addSite">
+              <input class="xp-input xp-input--sm" id="siteIn" maxlength="60" placeholder="claude.ai" aria-label="Add a site" autocomplete="off">
+              <button class="xp-btn" type="submit" id="addSiteBtn" disabled>Add</button>
             </form>
-          </div>
-          <p class="muted sm">Ghost Agent runs on the sites listed here. <span class="mono">*</span> means every site.</p>
-        </div>
-
-        <div class="pop-body" data-view="down" hidden>
-          <div class="downbox">
-            <strong style="font-weight:500">Start Ghost Agent engine</strong>
-            <p class="muted sm">Underlines and Rephrase are paused until the Engine answers. Run this in the project folder:</p>
-            <pre>cd engine &amp;&amp; uv run ghost-engine</pre>
-            <div><button class="btn btn-primary btn-sm" type="button" data-go="domain">Check again</button></div>
-          </div>
+          </section>
+          <section class="xp-section">
+            <div class="xp-row xp-row--center">
+              <div class="xp-site__text"><h3 class="xp-heading">Block sending</h3><p class="xp-hint">Enter and Send wait until every underlined value is hidden or ignored.</p></div>
+              <button class="xp-switch" type="button" role="switch" aria-checked="true" id="blockSwitch" aria-label="Block sending until every underlined value is hidden or ignored"><span class="xp-knob"></span></button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -820,7 +937,7 @@ footer .brand svg { width: 28px; height: 28px; }
       </div>
       <div class="panel">
         <h3>…send the text to a redaction service?</h3>
-        <p>Then the patient note goes to one more third party before it is cleaned. Ghost Agent's Detectors and language model run on your own computer.</p>
+        <p>Then the patient note goes to one more third party before it is cleaned. Ghost Agent checks the text on your own computer.</p>
       </div>
       <div class="panel">
         <h3>…buy an enterprise AI plan?</h3>
@@ -835,107 +952,101 @@ footer .brand svg { width: 28px; height: 28px; }
           <tr><th scope="row">The AI never sees the values you hide</th><td class="me y">Yes</td><td class="na">Nothing is sent</td><td class="y">Yes</td><td class="n">No</td></tr>
           <tr><th scope="row">Points at risky values while you write</th><td class="me y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
           <tr><th scope="row">People keep their AI tool</th><td class="me y">Yes</td><td class="n">No</td><td class="y">Yes</td><td class="y">Yes</td></tr>
-          <tr><th scope="row">You read the answer with real values</th><td class="me n">Not yet</td><td class="na">–</td><td class="na">Depends on the service</td><td class="y">Yes</td></tr>
+          <tr><th scope="row">You read the answer with real values</th><td class="me n">Coming soon</td><td class="na">–</td><td class="na">Depends on the service</td><td class="y">Yes</td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="limits">
+      <h4 class="law-head"><svg class="flag" viewBox="0 0 22 16" role="img" aria-label="Flag of Norway"><rect width="22" height="16" fill="#BA0C2F"/><rect x="6" width="4" height="16" fill="#FFF"/><rect y="6" width="22" height="4" fill="#FFF"/><rect x="7" width="2" height="16" fill="#00205B"/><rect y="7" width="22" height="2" fill="#00205B"/></svg>What Norwegian law says</h4>
+      <ul class="sm">
+        <li><strong style="font-weight:500">GDPR, Article 9</strong>, which applies as law in Norway through personopplysningsloven § 1: processing health data is prohibited unless one of the listed exceptions applies. The same goes for religious beliefs. <a href="https://lovdata.no/lov/2018-06-15-38/gdpr/a9">[1]</a> <a href="https://lovdata.no/lov/2018-06-15-38/%C2%A71">[2]</a></li>
+        <li><strong style="font-weight:500">Personopplysningsloven § 12</strong>: a fødselsnummer, or any other unique identifier, may only be processed when there is a legitimate need for secure identification and the method is necessary for that. An AI chat does not need to identify anyone to write a letter. <a href="https://lovdata.no/lov/2018-06-15-38/%C2%A712">[3]</a></li>
+        <li><strong style="font-weight:500">Helsepersonelloven § 21</strong>: health workers have a duty of confidentiality about people's health and other personal matters, and must prevent others from getting access to or knowledge of it, unless an exception such as consent applies. Pasting a patient note into an AI chat shares it with a company outside the care team. <a href="https://lovdata.no/lov/1999-07-02-64/%C2%A721">[4]</a></li>
+        <li><strong style="font-weight:500">GDPR, Article 83</strong>: breaking Article 9 can be fined up to €20 million or, for a company, up to 4% of its worldwide turnover in the previous year, whichever is higher. Datatilsynet is the supervisory authority in Norway. <a href="https://lovdata.no/lov/2018-06-15-38/gdpr/a83">[5]</a> <a href="https://lovdata.no/lov/2018-06-15-38/%C2%A720">[6]</a></li>
+      </ul>
+      <ol class="refs">
+        <li><a href="https://lovdata.no/lov/2018-06-15-38/gdpr/a9">Personvernforordningen (GDPR) artikkel 9</a>, Lovdata</li>
+        <li><a href="https://lovdata.no/lov/2018-06-15-38/%C2%A71">Personopplysningsloven (LOV-2018-06-15-38) § 1</a>, Lovdata</li>
+        <li><a href="https://lovdata.no/lov/2018-06-15-38/%C2%A712">Personopplysningsloven (LOV-2018-06-15-38) § 12</a>, Lovdata</li>
+        <li><a href="https://lovdata.no/lov/1999-07-02-64/%C2%A721">Helsepersonelloven (LOV-1999-07-02-64) § 21</a>, Lovdata</li>
+        <li><a href="https://lovdata.no/lov/2018-06-15-38/gdpr/a83">Personvernforordningen (GDPR) artikkel 83</a>, Lovdata</li>
+        <li><a href="https://lovdata.no/lov/2018-06-15-38/%C2%A720">Personopplysningsloven (LOV-2018-06-15-38) § 20</a>, Lovdata</li>
+      </ol>
+      <p class="sm muted">Sources checked on 8 November 2026. A short summary, not legal advice.</p>
     </div>
   </div>
 </section>
 
-<!-- INSTALL -->
+<!-- PRICING -->
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="head">
+      <h2>Pricing</h2>
+      <p class="lead">Free for anyone who uses AI chat on their own. Teams get help setting it up for their work.</p>
+    </div>
+    <div class="why plans">
+      <div class="panel">
+        <h3>Personal</h3>
+        <p class="price">Free</p>
+        <p>For anyone who writes to an AI chat.</p>
+        <ul>
+          <li>Underlines as you type or paste</li>
+          <li>Hide, Hide all, Rephrase and Ignore</li>
+          <li>All five sector Domains and your own words</li>
+        </ul>
+        <div><a class="btn btn-primary btn-sm" href="https://github.com/dimassolt/marka_mvp_2" target="_blank" rel="noopener noreferrer">Get it on GitHub</a></div>
+      </div>
+      <div class="panel">
+        <h3>Teams</h3>
+        <p class="price">Contact us</p>
+        <p>For clinics, schools, law firms and companies.</p>
+        <ul>
+          <li>Everything in Personal</li>
+          <li>Domains and word lists set up for your sector</li>
+          <li>Help rolling it out to your team</li>
+          <li>Early access to new features</li>
+        </ul>
+        <div><a class="btn btn-secondary btn-sm" href="https://github.com/dimassolt/marka_mvp_2/issues" target="_blank" rel="noopener noreferrer">Contact us</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GET STARTED -->
 <section class="sec" id="install">
   <div class="wrap">
     <div class="head">
-      <h2>Run it yourself</h2>
-      <p class="lead">Ghost Agent has two parts: a local Engine and a browser extension. Start the Engine, load the extension, and open ChatGPT.</p>
+      <h2>Get started in three steps</h2>
+      <p class="lead">No account and no sign-up. Ghost Agent works quietly in the background while you write.</p>
     </div>
     <div class="inst">
       <ol class="isteps">
         <li class="istep">
           <span class="k" aria-hidden="true">1</span>
-          <h3>Get the code</h3>
-          <div class="cmd"><code id="c1">git clone https://github.com/dimassolt/marka_mvp_2.git</code><button class="btn btn-text btn-sm" type="button" data-copy="c1">Copy</button></div>
-          <div class="row"><a class="btn btn-secondary btn-sm" href="https://github.com/dimassolt/marka_mvp_2">Open the repository</a></div>
+          <h3>Add it to your browser</h3>
+          <p>Download Ghost Agent and add it to your browser.</p>
+          <div class="row"><a class="btn btn-primary btn-sm" href="https://github.com/dimassolt/marka_mvp_2" target="_blank" rel="noopener noreferrer">Get it on GitHub</a></div>
         </li>
         <li class="istep">
           <span class="k" aria-hidden="true">2</span>
-          <h3>Start the Engine</h3>
-          <p>You need Python and <span class="mono">uv</span>. The Engine loads its models once at start, then waits on your machine only.</p>
-          <div class="cmd"><code id="c2">cd engine &amp;&amp; uv run ghost-engine</code><button class="btn btn-text btn-sm" type="button" data-copy="c2">Copy</button></div>
-          <p class="muted sm">It is ready when <span class="mono">http://127.0.0.1:8765/health</span> answers <span class="mono">{"status": "ok"}</span>.</p>
+          <h3>Open your AI chat</h3>
+          <p>Open ChatGPT and start a new message.</p>
         </li>
         <li class="istep">
           <span class="k" aria-hidden="true">3</span>
-          <h3>Load the extension</h3>
-          <p>Build it as the README describes. Then open <span class="mono">opera://extensions</span> or <span class="mono">chrome://extensions</span>, turn on Developer mode, choose Load unpacked and pick the built folder.</p>
-        </li>
-        <li class="istep">
-          <span class="k" aria-hidden="true">4</span>
-          <h3>Try it</h3>
-          <p>Open chatgpt.com and paste the demo note. The sensitive values get underlined almost at once.</p>
-          <div class="row"><button class="btn btn-primary btn-sm" type="button" id="copyNote">Copy the demo note</button></div>
+          <h3>Write as usual</h3>
+          <p>Type or paste your message. Hide or rephrase what is underlined, then press Send. Want to test it first? Copy our sample patient note and paste it into the chat.</p>
+          <div class="row"><button class="btn btn-secondary btn-sm" type="button" id="copyNote">Copy the sample note</button></div>
         </li>
       </ol>
       <aside class="needs" aria-label="Requirements">
         <h3 style="font-size:1.15rem">What you need</h3>
         <ul>
-          <li><span>Engine</span><span>Python with <span class="mono">uv</span></span></li>
-          <li><span>Browser</span><span>Any Chromium browser</span></li>
-          <li><span>Sites</span><span>Any site. Plain textarea fields are not scanned yet.</span></li>
-          <li><span>Network</span><span>None at run time. The Engine listens on <span class="mono">127.0.0.1:8765</span> only.</span></li>
+          <li><span>Account</span><span>None</span></li>
+          <li><span>Your data</span><span>Never leaves your computer</span></li>
         </ul>
-        <p class="muted sm">If the toolbar icon shows a red <b>!</b>, the Engine isn't running. Start it and the underlines come back.</p>
+        <p class="muted sm">Need help getting set up? <a href="https://github.com/dimassolt/marka_mvp_2/issues" target="_blank" rel="noopener noreferrer">Ask us on GitHub</a> and we will help you.</p>
       </aside>
-    </div>
-  </div>
-</section>
-
-<!-- UNDER THE HOOD -->
-<section class="sec" id="hood">
-  <div class="wrap">
-    <div class="head">
-      <h2>Under the hood</h2>
-      <p class="lead">A thin browser extension draws the highlights and Cards. The models are Python, so they live in a local Engine that the extension calls over localhost.</p>
-    </div>
-    <div class="hood">
-      <div class="arch">
-        <div class="arch-top">
-          <div class="node"><h4>Extension</h4><p class="sm">Chromium MV3, WXT and TypeScript</p><p class="sm muted">Underlines, Card, Ghost bar, Vault</p></div>
-          <div class="node later"><h4>Desktop App</h4><p class="sm">Later</p></div>
-        </div>
-        <div class="link"><span class="mono">HTTP 127.0.0.1:8765</span></div>
-        <div class="node">
-          <h4>Engine</h4>
-          <p class="sm">Python, uv and FastAPI, one core with swappable adapters</p>
-          <div class="port">
-            <p class="sm"><strong style="font-weight:500">Detector port</strong></p>
-            <div class="chips"><span class="chip">Regex</span><span class="chip">First-name list</span><span class="chip">Health keywords</span><span class="chip">GLiNER</span></div>
-          </div>
-          <div class="port">
-            <p class="sm"><strong style="font-weight:500">Rephraser port</strong></p>
-            <div class="chips"><span class="chip">Qwen3 1.7B Q4_K_M through llama-cpp-python</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="code-col">
-        <p class="sm muted">Offsets are counted in UTF-16 units, the way JavaScript counts. Findings never overlap.</p>
-<pre>POST /detect
-{ "text": "Kari har diabetes, fnr 01019000083",
-  "domain": "health" }
-
-{ "findings": [
-  { "start": 0,  "end": 4,  "category": "person_name",
-    "confidence": 0.6 },
-  { "start": 9,  "end": 17, "category": "health",
-    "confidence": 0.8 },
-  { "start": 23, "end": 34, "category": "fodselsnummer",
-    "confidence": 0.99 } ] }</pre>
-      </div>
-    </div>
-    <div class="adr">
-      <div><h4>Processing stays local</h4><p class="sm muted">Cloud APIs, tracking and logging of user text are ruled out, even for debugging.</p></div>
-      <div><h4>Thin extension, local engine</h4><p class="sm muted">One Engine core serves the extension now and a desktop App later, with no detection logic duplicated.</p></div>
-      <div><h4>Typed, numbered Placeholders</h4><p class="sm muted"><span class="mono">[PERSON_1]</span> and <span class="mono">[PERSON_2]</span> let the AI keep the structure and tell two people apart.</p></div>
     </div>
   </div>
 </section>
@@ -944,31 +1055,31 @@ footer .brand svg { width: 28px; height: 28px; }
 <section class="sec" id="roadmap">
   <div class="wrap">
     <div class="head">
-      <h2>Where it goes next</h2>
-      <p class="lead">Version 1 works on every site and covers five sectors. Restore comes next, then the desktop App for every program.</p>
+      <h2>Coming soon</h2>
+      <p class="lead">Here is what comes next for Ghost Agent.</p>
     </div>
     <ol class="track">
       <li class="stop done">
         <span class="pin" aria-hidden="true"></span>
-        <span class="here">We are here</span>
-        <p class="when">Built this weekend</p>
-        <h3>Version 1</h3>
+        <span class="here">Available now</span>
+        <p class="when">Today</p>
+        <h3>Ghost Agent</h3>
         <ul>
-          <li>Base and Health Detectors with an overlap rule</li>
-          <li>GLiNER Detector for surnames, places and addresses</li>
-          <li>Underlines, the Card and the Ghost bar</li>
-          <li>Hide, Hide all, Ignore and the Vault</li>
-          <li>Rephrase with a local model</li>
-          <li>An engine-down badge</li>
+          <li>Underlines as you type or paste</li>
+          <li>Hide, Hide all and Ignore</li>
+          <li>Rephrase on your own computer</li>
+          <li>Five sector Domains plus your own words</li>
+          <li>A switch for each site</li>
+          <li>Block sending until everything is resolved</li>
         </ul>
       </li>
       <li class="stop next">
         <span class="pin" aria-hidden="true"></span>
         <p class="when">Next</p>
-        <h3>Restore and wider coverage</h3>
+        <h3>See the real answer</h3>
         <ul>
-          <li>Restore: real values back in the AI's answer, on your screen only</li>
-          <li>Support for textarea fields</li>
+          <li>Restore: the real values back in the AI's answer, on your screen only</li>
+          <li>Support for more kinds of text fields</li>
         </ul>
       </li>
       <li class="stop later">
@@ -976,20 +1087,11 @@ footer .brand svg { width: 28px; height: 28px; }
         <p class="when">Later</p>
         <h3>Beyond the browser</h3>
         <ul>
-          <li>A desktop App for macOS and Windows</li>
-          <li>A warning before Send</li>
-          <li>Unloading the model when idle</li>
+          <li>A desktop app for macOS and Windows</li>
           <li>More Domains</li>
         </ul>
       </li>
     </ol>
-    <div class="limits">
-      <h4>Known limits in version 1</h4>
-      <ul class="sm">
-        <li>The AI's answer keeps its Placeholders. Restore, which shows the real values on your screen only, is planned for the next version.</li>
-        <li>Textarea fields are not scanned yet.</li>
-      </ul>
-    </div>
   </div>
 </section>
 
@@ -1001,11 +1103,11 @@ footer .brand svg { width: 28px; height: 28px; }
       <span class="wm" aria-hidden="true">m<span class="bl">ar</span>ka</span>
     </div>
     <div class="maker-copy">
-      <h2>Built by Marka</h2>
-      <p class="lead">Ghost Agent is built by Marka, a team at Oslo Sprint. Nobody should have to choose between getting help from AI and protecting the people whose data they handle.</p>
+      <h2>Made by Marka</h2>
+      <p class="lead">We believe nobody should have to choose between getting help from AI and protecting the people whose data they handle.</p>
       <div class="facts">
-        <div><span class="muted sm">Event</span><span>Oslo Sprint, 6–8 November 2026</span></div>
-        <div><span class="muted sm">Repository</span><a href="https://github.com/dimassolt/marka_mvp_2">github.com/dimassolt/marka_mvp_2</a></div>
+        <div><span class="muted sm">Download</span><a href="https://github.com/dimassolt/marka_mvp_2" target="_blank" rel="noopener noreferrer">github.com/dimassolt/marka_mvp_2</a></div>
+        <div><span class="muted sm">Questions and help</span><a href="https://github.com/dimassolt/marka_mvp_2/issues" target="_blank" rel="noopener noreferrer">Ask us on GitHub</a></div>
       </div>
     </div>
   </div>
@@ -1116,8 +1218,8 @@ footer .brand svg { width: 28px; height: 28px; }
     $('youText').innerHTML = esc(sent.text);
     $('aiText').innerHTML = esc(shown);
     $('summary').textContent = sent.nRaw === 0
-      ? 'The AI received ' + sent.nPh + ' Placeholder' + (sent.nPh === 1 ? '' : 's') + ' and never saw a real value.'
-      : 'The AI received ' + sent.nPh + ' Placeholder' + (sent.nPh === 1 ? '' : 's') + ' and ' + sent.nRaw + ' real value' + (sent.nRaw === 1 ? '' : 's') + '.';
+      ? 'The AI received ' + sent.nPh + ' placeholder' + (sent.nPh === 1 ? '' : 's') + ' and never saw a real value.'
+      : 'The AI received ' + sent.nPh + ' placeholder' + (sent.nPh === 1 ? '' : 's') + ' and ' + sent.nRaw + ' real value' + (sent.nRaw === 1 ? '' : 's') + '.';
   }
   function renderAll() { renderField(); renderBar(); renderThread(); }
 
@@ -1248,16 +1350,16 @@ footer .brand svg { width: 28px; height: 28px; }
   }
   function startStream() {
     clearInterval(streamTimer);
-    if (reduce) { sent.shown = sent.tokens.length; renderThread(); return; }
+    if (reduce) { sent.shown = sent.tokens.length; renderThread(); wrap.hidden = true; return; }
     streamTimer = setInterval(function () {
       sent.shown = Math.min(sent.tokens.length, sent.shown + 2);
       renderThread();
-      if (sent.shown >= sent.tokens.length) { clearInterval(streamTimer); say('Answer complete'); }
+      if (sent.shown >= sent.tokens.length) { clearInterval(streamTimer); wrap.hidden = true; say('Answer complete'); }
     }, 45);
   }
   function reset() {
     clearInterval(streamTimer); clearTimeout(rephTimer); closeCard(); closeMenu();
-    vault = newVault(); ignored.clear(); sent = null;
+    vault = newVault(); ignored.clear(); sent = null; wrap.hidden = false;
     S = fresh(); renderAll(); say('Demo reset');
   }
 
@@ -1319,144 +1421,170 @@ footer .brand svg { width: 28px; height: 28px; }
   v.playbackRate = 1.3;
 })();
 
-/* Hero example: the Card's Hide, Rephrase and Ignore buttons. */
-(function () {
-  var card = document.getElementById('heroCard'), field = document.getElementById('heroField');
-  var count = document.getElementById('heroCount'), status = document.getElementById('heroStatus');
-  var KARI = '<span class="ul amber">Kari</span>';
-  var REST = ' ' + KARI + ', 34 år, jobber som lærer i <span class="ul teal">Bærum</span> og har <span class="ul teal">diabetes</span> type 1.';
-  var NEW_SENTENCE = 'Pasienten er en kvinne i 30-årene.';
-  var HEAD = '<span class="catname ul red">Fødselsnummer</span>';
-  var timer = null;
-
-  function first(fnr) { return 'Pasienten heter ' + '<span class="ul amber">Kari Nordmann</span>, fnr ' + fnr + '.'; }
-  function btn(act, cls, label) { return '<button class="btn ' + cls + ' btn-sm" type="button" data-a="' + act + '">' + label + '</button>'; }
-  function done(text) { return '<p class="note">' + text + '</p>'; }
-
-  var VIEWS = {
-    start: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', card: HEAD +
-      '<div class="val-row"><span class="val">01019000083</span><span class="stamp">hide as <b>[FNR_1]</b></span></div><hr class="tear"><div class="acts">' +
-      btn('hide', 'btn-primary', 'Hide') + btn('rephrase', 'btn-secondary', 'Rephrase') + btn('ignore', 'btn-text', 'Ignore') + '</div>' },
-    hidden: { n: 4, fnr: '[FNR_1]', say: 'Hidden as [FNR_1]', card: HEAD + done('<span class="ph">[FNR_1]</span>') },
-    ignored: { n: 4, fnr: '01019000083', say: 'Ignored', card: HEAD + done('Ignored in this message. It will not be underlined again until you send.') },
-    working: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', say: 'Rephrasing', card: HEAD +
-      '<hr class="tear"><p class="note">Rephrasing…</p><div class="acts" style="margin-top:12px">' + btn('reject', 'btn-text', 'Cancel') + '</div>' },
-    preview: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', say: 'New sentence ready: ' + NEW_SENTENCE, card: HEAD +
-      '<hr class="tear"><p class="note">New sentence</p><p class="sunk">' + NEW_SENTENCE + '</p><div class="acts">' +
-      btn('accept', 'btn-primary', 'Accept') + btn('reject', 'btn-secondary', 'Reject') + '</div>' },
-    accepted: { n: 3, whole: NEW_SENTENCE, say: 'Sentence rephrased', card: HEAD + done('Rephrased. The name and the number are gone from the sentence.') }
-  };
-  var NEXT = { hide: 'hidden', ignore: 'ignored', rephrase: 'working', accept: 'accepted', reject: 'start' };
-
-  function draw(name) {
-    var v = VIEWS[name];
-    clearTimeout(timer);
-    card.innerHTML = v.card;
-    field.innerHTML = (v.whole || first(v.fnr)) + REST;
-    count.textContent = v.n;
-    document.getElementById('heroReset').hidden = !/^(hidden|ignored|accepted)$/.test(name);
-    status.textContent = v.say || '';
-    if (name === 'working') timer = setTimeout(function () { draw('preview'); focusFirst(); }, 900);
-  }
-  function focusFirst() { var b = card.querySelector('button'); if (b && card.contains(document.activeElement) || b && document.activeElement === document.body) b.focus({ preventScroll: true }); }
-  card.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-a]');
-    if (!b) return;
-    draw(NEXT[b.getAttribute('data-a')]);
-    var f = card.querySelector('button') || document.getElementById('heroReset'); f.focus({ preventScroll: true });
-  });
-  document.getElementById('heroReset').addEventListener('click', function () {
-    draw('start');
-    card.querySelector('button').focus({ preventScroll: true });
-  });
-  draw('start');
-  status.textContent = '';
-})();
-
 /* Popup illustration, copy buttons. Everything stays in this page. */
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var DEMO_NOTE = 'Hei! Kan du hjelpe meg å skrive et henvisningsbrev? Pasienten heter Kari Nordmann, fnr 01019000083. Kari, 34 år, jobber som lærer i Bærum og har diabetes type 1. Hun er sykemeldt og bruker insulin.';
 
-  /* ---------- popup views ---------- */
-  var pop = $('pop'), segBtns = document.querySelectorAll('[data-show]');
+  /* ---------- popup views: Domain, New Domain, Settings, like the extension popup ---------- */
+  var pop = $('pop');
   function show(v) {
     pop.querySelectorAll('[data-view]').forEach(function (el) { el.hidden = el.getAttribute('data-view') !== v; });
-    segBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-show') === v)); });
-    var down = v === 'down';
-    $('badge').hidden = !down;
-    $('popStatus').textContent = down ? 'Engine down' : 'Engine running';
-    $('popStatus').classList.toggle('down', down);
+    if (v === 'new-domain') {
+      $('domName').value = ''; $('domName').removeAttribute('aria-invalid');
+      $('domErr').hidden = true; $('domCreate').disabled = true;
+      $('domName').focus({ preventScroll: true });
+    }
   }
-  segBtns.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-show')); }); });
   pop.addEventListener('click', function (e) {
     var go = e.target.closest('[data-go]');
     if (go) { show(go.getAttribute('data-go')); return; }
     var rm = e.target.closest('[data-rm]');
     if (rm) { rm.closest('li').remove(); }
   });
+  function xIcon() { return '<svg aria-hidden="true"><use href="#x"/></svg>'; }
 
-  var sw = $('siteSwitch');
-  sw.addEventListener('click', function () {
-    var on = sw.getAttribute('aria-checked') !== 'true';
-    sw.setAttribute('aria-checked', String(on));
-    $('siteState').textContent = on ? 'On' : 'Off';
+  /* ---------- switches: they slide only after a click, like the extension ---------- */
+  function flip(btn) {
+    var on = btn.getAttribute('aria-checked') !== 'true';
+    btn.classList.add('xp-switch--animate');
+    btn.setAttribute('aria-checked', String(on));
+    return on;
+  }
+  $('siteSwitch').addEventListener('click', function () {
+    var on = flip(this);
+    $('siteState').textContent = on ? 'Checking this site' : 'Off on this site';
+    /* Like the extension: the ghost wears sunglasses while it checks the site. On, they swing
+       down over the eyes; off, they vanish and a copy cut into grains blows away to the right. */
+    $('popGlasses').classList.toggle('off', !on);
+    if (!on && !reduceMotion) dust();
   });
+  $('blockSwitch').addEventListener('click', function () { flip(this); });
+  var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function dust() {
+    var NS = 'http://www.w3.org/2000/svg', G = 16;
+    var d = document.createElementNS(NS, 'svg');
+    d.setAttribute('class', 'pdust'); d.setAttribute('viewBox', '0 0 512 512');
+    for (var i = 0; i < 18 * 8; i++) {
+      var col = i % 18, x = 118 + col * G, y = 162 + Math.floor(i / 18) * G;
+      var dx = 120 + Math.random() * 160, dy = -dx * 0.6 + (Math.random() - 0.5) * 40;
+      var delay = (col / 18) * 150 + Math.random() * 60;
+      var g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'pgrain');
+      g.setAttribute('style', '--dx:' + dx + 'px;--dy:' + dy + 'px;--delay:' + delay + 'ms');
+      var s = document.createElementNS(NS, 'svg');
+      s.setAttribute('x', x); s.setAttribute('y', y); s.setAttribute('width', G); s.setAttribute('height', G);
+      s.setAttribute('viewBox', x + ' ' + y + ' ' + G + ' ' + G);
+      var u = document.createElementNS(NS, 'use');
+      u.setAttribute('href', '#ghost-glasses'); u.setAttribute('width', 512); u.setAttribute('height', 512);
+      s.appendChild(u); g.appendChild(s); d.appendChild(g);
+    }
+    $('popGhost').appendChild(d);
+    setTimeout(function () { d.remove(); }, 700);
+  }
 
   /* ---------- Domains and your words ---------- */
-  var mine = ['Prosjekt Nordlys', 'Avdeling 4B', 'Kunde K-4471'];
-  var builtIn = {
-    health: 'Built-in Domain. Finds the Base Categories plus diagnoses, medicines and terms like sykemeldt. Its word list is fixed.',
-    education: 'Built-in Domain. Finds the Base Categories plus terms like IOP, fravær and sakkyndig vurdering. Its word list is fixed.',
-    courts: 'Built-in Domain. Finds the Base Categories plus terms like lukkede dører, utkast til dom and samvær. Its word list is fixed.',
-    industrial: 'Built-in Domain. Finds the Base Categories plus machine makers and production capacity. Its word list is fixed.',
-    religious: 'Built-in Domain. Finds the Base Categories plus terms like sjelesorg and forbønn. Its word list is fixed.',
-    free: 'Built-in Domain. Finds the Base Categories only: IDs, cards, secrets, names and contact data.'
+  /* The built-in Domains' texts are the extension's own (utils/popup-settings.ts). */
+  var BUILT_IN = {
+    free: 'Basic checks only: fnr, card, email, phone, names.',
+    health: '419 health words in Bokmål and English: diagnoses, medicines, and terms like innlagt and sykemeldt.',
+    education: '322 student words in Bokmål and English: special needs, absence, discipline and grades, like IOP and fravær.',
+    courts: '324 court words in Bokmål and English: closed hearings, draft decisions and sensitive case types, like lukkede dører and barnevern.',
+    industrial: '383 plant words in Bokmål and English: machine makers, machine park, lines and capacity, like Fanuc and produksjonslinje.',
+    religious: '343 parish words in Bokmål and English: membership, pastoral care and ceremonies, like menighet and sjelesorg.'
   };
-  function drawWords() {
-    var box = $('words'); box.textContent = '';
-    mine.forEach(function (w, i) {
-      var c = document.createElement('span'); c.className = 'wchip';
-      c.appendChild(document.createTextNode(w));
-      var x = document.createElement('button'); x.type = 'button'; x.textContent = '×';
-      x.setAttribute('aria-label', 'Remove ' + w);
-      x.addEventListener('click', function () { mine.splice(i, 1); drawWords(); });
-      c.appendChild(x); box.appendChild(c);
-    });
+  var own = Object.create(null);
+  /* Enough words that the list fills and scrolls from the start, so the popup opens at full height. */
+  own['My clinic'] = ['Prosjekt Nordlys', 'Avdeling 4B', 'Kunde K-4471', 'Dr. Haugen', 'Rom 312',
+    'Lindeberg legesenter', 'Sak 2024-117', 'Team Vest', 'Nordre Aker', 'Klinikk Øst',
+    'Pasientgruppe B', 'Ullevål', 'Mottak 2', 'Prosjekt Fjellbris'];
+  var domain = 'My clinic', query = '';
+
+  function drawDomain() {
+    var words = own[domain];
+    $('wordsBox').hidden = !words;
+    $('builtinBox').hidden = !!words;
+    $('builtinNote').textContent = BUILT_IN[domain] || '';
+    var tip = $('domTip');
+    tip.textContent = domain === 'free' ? 'Basic checks only: fnr, card, email, phone, names.' : 'Plus the basic checks: fnr, card, email, phone, names.';
+    if (!words) {
+      var line = document.createElement('span');
+      line.textContent = 'Want your own words? Make a Domain with the + button.';
+      tip.appendChild(line);
+    }
+    if (words) drawWords();
   }
+
+  /* Search shows only once the full list scrolls; while filtered, it stays. */
+  function drawWords(landed) {
+    var words = own[domain], q = query.trim().toLowerCase();
+    var shown = words.filter(function (w) { return w.toLowerCase().indexOf(q) >= 0; });
+    var ul = $('words');
+    ul.textContent = '';
+    shown.forEach(function (w) {
+      var li = document.createElement('li'); li.className = 'xp-word';
+      var t = document.createElement('span'); t.textContent = w; t.title = w;
+      var x = document.createElement('button'); x.type = 'button';
+      x.setAttribute('aria-label', 'Remove ' + w); x.innerHTML = xIcon();
+      x.addEventListener('click', function () { words.splice(words.indexOf(w), 1); drawWords(); });
+      li.appendChild(t); li.appendChild(x); ul.appendChild(li);
+    });
+    ul.hidden = shown.length === 0;
+    $('noMatch').hidden = !(words.length && !shown.length);
+    if (!q) $('wordSearch').hidden = !(ul.scrollHeight > ul.clientHeight);
+    var i = landed ? shown.indexOf(landed) : -1;
+    if (i >= 0) ul.children[i].scrollIntoView({ block: 'nearest' });
+  }
+
+  $('wordSearch').addEventListener('input', function () { query = this.value; drawWords(); });
+  $('wordIn').addEventListener('input', function () { $('addWordBtn').disabled = !this.value.trim(); });
   $('addWord').addEventListener('submit', function (e) {
     e.preventDefault();
     var v = $('wordIn').value.trim();
-    if (v && mine.indexOf(v) < 0) { mine.push(v); drawWords(); }
-    $('wordIn').value = '';
+    if (!v) return;
+    if (own[domain].indexOf(v) < 0) own[domain].push(v);
+    $('wordIn').value = ''; $('addWordBtn').disabled = true;
+    drawWords(v);
   });
   $('domSel').addEventListener('change', function () {
-    var v = this.value, isMine = v === 'mine';
-    $('wordsBox').hidden = !isMine;
-    $('builtinNote').hidden = isMine;
-    $('builtinNote').textContent = builtIn[v] || '';
+    domain = this.value; query = ''; $('wordSearch').value = '';
+    drawDomain();
   });
-  $('newDom').addEventListener('click', function () {
-    var sel = $('domSel');
-    var n = sel.querySelectorAll('option[data-new]').length + 1;
-    var o = document.createElement('option');
-    o.value = 'mine'; o.textContent = 'New Domain ' + n; o.setAttribute('data-new', '');
-    sel.appendChild(o); sel.value = 'mine'; o.selected = true;
-    mine = []; drawWords();
-    sel.dispatchEvent(new Event('change'));
-    $('wordIn').focus();
+
+  $('domName').addEventListener('input', function () {
+    $('domCreate').disabled = !this.value.trim();
+    $('domErr').hidden = true; this.removeAttribute('aria-invalid');
   });
+  $('newDomForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('domName').value.trim();
+    if (!name) return;
+    var taken = own[name] || Object.keys(BUILT_IN).some(function (k) { return k === name.toLowerCase(); });
+    if (taken) { $('domErr').hidden = false; $('domName').setAttribute('aria-invalid', 'true'); return; }
+    own[name] = [];
+    var o = document.createElement('option'); o.value = name; o.textContent = name;
+    $('domSel').appendChild(o); $('domSel').value = name;
+    domain = name; query = ''; $('wordSearch').value = '';
+    show('domain'); drawDomain();
+    $('wordIn').focus({ preventScroll: true });
+  });
+
+  $('siteIn').addEventListener('input', function () { $('addSiteBtn').disabled = !this.value.trim(); });
   $('addSite').addEventListener('submit', function (e) {
     e.preventDefault();
     var v = $('siteIn').value.trim().toLowerCase();
     if (!v) return;
-    var li = document.createElement('li');
-    var s = document.createElement('span'); s.className = 'mono'; s.textContent = v === '*' ? '* (all sites)' : v;
-    var b = document.createElement('button'); b.className = 'btn btn-text btn-sm'; b.type = 'button'; b.textContent = 'Remove'; b.setAttribute('data-rm', '');
-    li.appendChild(s); li.appendChild(b); $('sites').appendChild(li);
-    $('siteIn').value = '';
+    var li = document.createElement('li'); li.className = 'xp-site-item';
+    var s = document.createElement('span');
+    if (v === '*') { s.className = 'mono'; s.textContent = '*'; } else { s.textContent = v; }
+    li.appendChild(s);
+    if (v === '*') { var m = document.createElement('span'); m.className = 'xp-muted'; m.textContent = 'All sites'; li.appendChild(m); }
+    var b = document.createElement('button'); b.className = 'xp-bare xp-bare--muted'; b.type = 'button';
+    b.setAttribute('data-rm', ''); b.setAttribute('aria-label', 'Remove ' + v); b.innerHTML = xIcon();
+    li.appendChild(b); $('sites').appendChild(li);
+    $('siteIn').value = ''; $('addSiteBtn').disabled = true;
   });
-  drawWords();
+  drawDomain();
 
   /* ---------- copy buttons ---------- */
   function copy(text, btn) {
