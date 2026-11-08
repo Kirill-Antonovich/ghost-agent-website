@@ -1,0 +1,1502 @@
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ghost Agent</title>
+<meta name="description" content="Ghost Agent underlines sensitive data while you write to an AI chat, and lets you hide or rephrase it before you send. Everything runs on your own machine. Built by Marka.">
+<meta property="og:title" content="Ghost Agent">
+<meta property="og:description" content="Catch sensitive data before the AI sees it. Local-only detection and rephrasing for AI chats. Built by Marka.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<style>
+/* Fonts are served from this site's own folder: the page makes no third-party requests. */
+@font-face { font-family: 'DM Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/dm-mono-400.woff2) format('woff2'); }
+@font-face { font-family: 'DM Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/dm-mono-500.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Sans'; font-style: normal; font-weight: 400 500; font-display: swap; src: url(fonts/instrument-sans.woff2) format('woff2'); }
+@font-face { font-family: 'Schibsted Grotesk'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/schibsted-grotesk-700.woff2) format('woff2'); }
+
+/* Layout: a pharmacy label sheet. Left-aligned column on warm paper, sections cut apart by dashed tear-off rules,
+   one cobalt stamp for whatever was hidden. Tokens mirror extension/assets/tokens.css from design.md. */
+:root {
+  --color-paper: #F3EEE3;
+  --color-paper-2: #FBF8F1;
+  --color-paper-3: #E8E1D2;
+  --color-ink: #15130E;
+  --color-ink-2: #3B372E;
+  --color-muted: #5F5B50;
+  --color-accent: #15130E;
+  --color-stamp: #1B3FCB;
+  --color-cat-id: #C2321F;
+  --color-cat-contact: #B86E00;
+  --color-cat-domain: #0C7A78;
+  --tint-id: rgba(194, 50, 31, .14);
+  --tint-contact: rgba(184, 110, 0, .17);
+  --tint-domain: rgba(12, 122, 120, .15);
+  --rule: #D3CBB9;
+  --rule-strong: #B3AA94;
+  --rule-tear: 1.5px dashed #B3AA94;
+  --font-head: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --shadow-lift: 0 1px 0 rgba(21, 19, 14, .06), 0 14px 30px -12px rgba(21, 19, 14, .32);
+  --shadow-mould: 0 3px 0 #000;
+  --shadow-mould-clear: 0 3px 0 var(--rule);
+  --dur-micro: 120ms;
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  /* Team logo only */
+  --marka-green: #2F6B4C;
+  --marka-ink: #10291B;
+  --marka-cream: #F3EFE6;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: 400 18px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 30; background: var(--color-paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
+}
+h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -.02em; line-height: 1.1; }
+h1 { font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: 1.02; letter-spacing: -.03em; }
+h2 { font-size: clamp(1.9rem, 3.8vw, 2.8rem); }
+h3 { font-size: clamp(1.3rem, 2.2vw, 1.6rem); }
+h4 { font-size: 1.05rem; letter-spacing: -.01em; }
+p { margin: 0; }
+a { color: inherit; }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--color-stamp); outline-offset: 2px; transition: none; }
+
+.wrap {
+  max-width: 1120px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sec { padding-block: 80px; }
+.sec + .sec { border-top: var(--rule-tear); }
+.head { display: grid; gap: 14px; max-width: 46rem; margin-bottom: 40px; }
+.lead { font-size: 1.15rem; color: var(--color-ink-2); }
+.muted { color: var(--color-muted); }
+.sm { font-size: .94rem; }
+
+/* header */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--color-paper); border-bottom: 1px solid var(--rule);
+}
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 700 1.2rem var(--font-head); letter-spacing: -.02em; }
+.brand svg { width: 34px; height: 34px; flex: none; }
+.nav { display: flex; align-items: center; gap: 22px; }
+.nav a:not(.btn) { text-decoration: none; color: var(--color-ink-2); font-size: .98rem; transition: color var(--dur-micro) var(--ease-out); }
+.nav a:not(.btn):hover { color: var(--color-stamp); }
+@media (max-width: 980px) { .nav a:not(.btn) { display: none; } }
+
+/* controls */
+.btn {
+  font: 500 1rem/1 var(--font-body); height: 42px; padding: 0 18px; border-radius: 10px;
+  border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), opacity var(--dur-micro) var(--ease-out);
+}
+.btn-sm { height: 38px; padding: 0 13px; font-size: .95rem; }
+.btn-primary { background: var(--color-accent); color: var(--color-paper-2); box-shadow: var(--shadow-mould); }
+.btn-primary:hover { background: #34302a; }
+.btn-secondary { background: var(--color-paper-2); color: var(--color-ink); border-color: var(--rule); box-shadow: var(--shadow-mould-clear); }
+.btn-secondary:hover { background: var(--color-paper-3); }
+.btn-primary:active, .btn-secondary:active { transform: translateY(3px); box-shadow: none; }
+.btn-text { background: none; color: var(--color-muted); }
+.btn-text:hover { color: var(--color-ink); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn.loading { opacity: .7; cursor: progress; }
+
+/* underlines, stamp, tear rule */
+.ul, .f { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+.red { text-decoration-color: var(--color-cat-id); }
+.amber { text-decoration-color: var(--color-cat-contact); }
+.teal { text-decoration-color: var(--color-cat-domain); }
+.hov.red, .f.red:hover { background: var(--tint-id); }
+.hov.amber, .f.amber:hover { background: var(--tint-contact); }
+.hov.teal, .f.teal:hover { background: var(--tint-domain); }
+.stamp {
+  display: inline-block; font-size: .82rem; line-height: 1; color: var(--color-stamp);
+  border: 1.5px solid var(--color-stamp); border-radius: 4px; padding: 5px 8px;
+  transform: rotate(-3deg); white-space: nowrap; font-weight: 500;
+}
+.stamp b { font-family: var(--font-mono); font-weight: 500; }
+.tear { border: 0; border-top: var(--rule-tear); margin: 12px 0; }
+.ph { font-family: var(--font-mono); font-size: .9em; color: var(--color-stamp); }
+
+/* Card */
+.card {
+  width: min(300px, 100%); background: var(--color-paper-2); border: 1px solid var(--rule);
+  border-radius: 10px; box-shadow: var(--shadow-lift); padding: 14px 14px 12px;
+}
+.card .catname { font-weight: 500; font-size: .95rem; }
+.card .val-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 8px; margin-top: 8px; }
+.card .val { font-family: var(--font-mono); font-size: 1rem; overflow-wrap: anywhere; }
+.card .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.card .note { font-size: .95rem; color: var(--color-muted); }
+.card .sunk { background: var(--color-paper-3); border-radius: 6px; padding: 10px 12px; margin: 6px 0 12px; font-size: .98rem; line-height: 1.45; }
+
+/* field + Ghost bar */
+.box { position: relative; background: var(--color-paper-2); border: 1px solid var(--color-ink); border-radius: 12px; }
+.field { padding: 18px 18px 8px; font-size: 1.05rem; line-height: 1.95; min-height: 86px; }
+.field .f { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 2px; transition: background-color var(--dur-micro) var(--ease-out); text-align: inherit; }
+.empty { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; color: var(--color-muted); line-height: 1.4; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px 12px; }
+.foot .hint { color: var(--color-muted); font-size: .9rem; }
+.gbar { position: absolute; right: 16px; bottom: calc(100% - 1px); }
+.gtab {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 13px; cursor: pointer;
+  background: var(--color-paper-2); color: var(--color-ink); font: 500 .92rem/1 var(--font-body);
+  border: 1px solid var(--color-ink); border-bottom: 0; border-left: 1.5px dashed var(--color-stamp); border-radius: 8px 8px 0 0;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+}
+.gtab .n { font-family: var(--font-mono); font-weight: 500; color: var(--color-stamp); }
+.gtab[aria-expanded="true"] { background: var(--color-accent); color: var(--color-paper-2); }
+.gtab[aria-expanded="true"] .n { color: var(--color-paper-2); }
+.gmenu {
+  position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 6; min-width: 220px;
+  background: var(--color-accent); color: var(--color-paper-2); border-radius: 10px; padding: 6px; box-shadow: var(--shadow-lift); display: grid;
+}
+.gmenu button {
+  font: 400 .96rem/1.2 var(--font-body); color: inherit; background: none; border: 0; text-align: left;
+  padding: 11px 12px; border-radius: 6px; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out);
+}
+.gmenu button:hover:not(:disabled) { background: rgba(255, 255, 255, .14); }
+.gmenu button:disabled { opacity: .45; cursor: not-allowed; }
+.gmenu .rule { border-top: 1px dashed rgba(255, 255, 255, .3); margin: 2px 6px; }
+.gtab:focus-visible, .gmenu button:focus-visible { outline-offset: 2px; }
+
+/* hero */
+.hero { padding-block: 64px 80px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.hero-copy { display: grid; gap: 24px; justify-items: start; }
+.hero-copy .lead { max-width: 33rem; font-size: 1.22rem; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.mock { display: grid; gap: 12px; padding-bottom: 44px; min-width: 0; }
+@media (max-width: 560px) { .mock { gap: 42px; } }
+.mock .card { margin-left: 22px; }
+.mock .field { min-height: 0; }
+.byline { display: inline-flex; align-items: center; gap: 10px; }
+.byline svg { width: 26px; height: 26px; flex: none; }
+@media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } .hero { padding-block: 44px 64px; } }
+
+/* two-column helpers */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 860px) { .pair { grid-template-columns: 1fr; } }
+.panel { background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 6px; padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel h3 { font-size: 1.15rem; }
+.panel .txt { line-height: 1.85; }
+.hot { background: var(--tint-id); border-radius: 2px; }
+
+/* steps */
+.steps { list-style: none; margin: 0; padding: 0; }
+.step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: center; padding-block: 40px; border-top: var(--rule-tear); }
+.step:first-child { border-top: 0; padding-top: 0; }
+.step:last-child { padding-bottom: 0; }
+.step-copy { display: grid; gap: 12px; }
+.step-n { font: 700 3.2rem/1 var(--font-head); color: var(--color-ink); letter-spacing: -.04em; }
+.vis { background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 6px; padding: 22px; min-width: 0; display: grid; gap: 14px; justify-items: start; }
+.vis .card { box-shadow: var(--shadow-lift); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .94rem; }
+.swap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.swap .arrow { color: var(--color-muted); }
+.strike { color: var(--color-muted); text-decoration: line-through; text-decoration-color: var(--rule); }
+.gstatic { position: relative; padding-bottom: 34px; width: 100%; min-height: 170px; }
+.gstatic .gbar { right: auto; left: 0; top: auto; bottom: 0; }
+.gstatic .gmenu { right: auto; left: 0; bottom: 40px; }
+@media (max-width: 860px) { .step { grid-template-columns: 1fr; gap: 24px; } }
+
+/* demo */
+.video { margin: 0 0 64px; display: grid; gap: 12px; }
+.video video { display: block; width: 100%; height: auto; aspect-ratio: 1400 / 680; background: var(--color-ink); border: 1px solid var(--color-ink); border-radius: 10px; }
+.try-head { display: grid; gap: 12px; max-width: 46rem; margin-bottom: 28px; padding-top: 40px; border-top: var(--rule-tear); }
+.try-head h3 { font-size: clamp(1.5rem, 2.8vw, 2rem); }
+.demo-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.chat { max-width: 860px; display: grid; gap: 18px; }
+.thread { display: grid; gap: 14px; }
+.thread-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--color-paper-2); }
+.seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 7px; background: none; color: var(--color-muted); font: 500 .95rem var(--font-body); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.seg button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-paper-2); }
+.msg { border-radius: 10px; padding: 14px 16px; max-width: 92%; min-width: 0; }
+.msg.you { background: var(--color-paper-3); justify-self: end; }
+.msg.ai { background: var(--color-paper-2); border: 1px solid var(--rule); }
+.msg .who { font-size: .85rem; color: var(--color-muted); margin-bottom: 4px; }
+.msg p { white-space: pre-wrap; line-height: 1.75; overflow-wrap: anywhere; }
+.fieldwrap { position: relative; padding-top: 36px; }
+.fieldwrap > .card { position: absolute; z-index: 7; }
+
+/* table */
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--color-paper-2); }
+table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: .98rem; }
+th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 500; color: var(--color-muted); font-size: .92rem; background: var(--color-paper-3); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 500; white-space: nowrap; }
+.note-box { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+
+/* privacy */
+.priv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.priv-copy { display: grid; gap: 22px; }
+.priv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.priv-list li { padding: 13px 0; border-top: var(--rule-tear); }
+.priv-list li:last-child { border-bottom: var(--rule-tear); }
+.diagram { width: 100%; height: auto; max-width: 520px; }
+.diagram .t { fill: var(--color-ink); font-family: var(--font-body); font-size: 15px; }
+.diagram .tb { font-weight: 500; font-size: 16px; }
+.diagram .ts { fill: var(--color-muted); font-size: 13px; }
+.diagram .tm { fill: var(--color-stamp); font-family: var(--font-mono); font-size: 13px; }
+.diagram .box1 { fill: var(--color-paper-2); stroke: var(--color-ink); stroke-width: 1.5; }
+.diagram .zone { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; stroke-dasharray: 7 6; }
+.diagram .ln { stroke: var(--color-ink); stroke-width: 1.8; fill: none; }
+.diagram .dash { stroke: var(--color-ink); stroke-width: 1.8; stroke-dasharray: 5 5; fill: none; }
+.diagram .cross { stroke: var(--color-ink); stroke-width: 3; stroke-linecap: round; }
+.diagram .bg { fill: var(--color-paper); }
+.diagram .cloud { fill: none; stroke: var(--color-muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.diagram .head { fill: var(--color-ink); }
+@media (max-width: 860px) { .priv { grid-template-columns: 1fr; gap: 36px; } }
+
+/* popup */
+.popsec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+.popsec .head { margin-bottom: 0; }
+.pop-feats { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
+.pop-feats li { padding: 13px 0; border-top: var(--rule-tear); display: grid; gap: 2px; }
+.pop-feats li:last-child { border-bottom: var(--rule-tear); }
+.pop-feats strong { font-weight: 500; }
+.stage { background: var(--color-paper-3); border-radius: 6px; padding: 22px; display: grid; gap: 16px; justify-items: center; min-width: 0; }
+.stage .seg { justify-self: center; }
+.tbar { width: min(330px, 100%); display: flex; align-items: center; gap: 10px; background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 10px; padding: 6px 8px 6px 12px; }
+.tbar .url { flex: 1; min-width: 0; font: 400 .88rem var(--font-mono); color: var(--color-muted); background: var(--color-paper); border-radius: 6px; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tbar .ext { position: relative; width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--color-paper-3); flex: none; }
+.tbar .ext svg { width: 24px; height: 24px; }
+.tbar .badge { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 4px; background: var(--color-cat-id); color: #fff; font: 500 .75rem/17px var(--font-body); text-align: center; }
+.pop { width: min(330px, 100%); background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow-lift); font-size: .95rem; position: relative; }
+.pop::before { content: ""; position: absolute; top: -7px; right: 20px; width: 12px; height: 12px; background: var(--color-paper-2); border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); transform: rotate(45deg); }
+.pop-head { display: flex; align-items: center; gap: 9px; padding: 14px 14px 12px; border-bottom: var(--rule-tear); }
+.pop-head svg { width: 26px; height: 26px; flex: none; }
+.pop-head strong { font: 700 1.05rem var(--font-head); letter-spacing: -.01em; flex: 1; }
+.st { font-size: .8rem; padding: 3px 8px; border-radius: 4px; background: var(--color-paper-3); color: var(--color-ink-2); white-space: nowrap; }
+.st.down { background: var(--color-ink); color: var(--color-paper-2); }
+.pop-body { padding: 12px 14px 14px; display: grid; gap: 12px; }
+.prow { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--color-paper-3); border-radius: 6px; padding: 8px 8px 8px 12px; }
+.prow .site { font-size: .92rem; overflow-wrap: anywhere; }
+.prow .site .mono { font-size: .88rem; }
+.prow-r { display: flex; align-items: center; gap: 6px; flex: none; }
+.sw { width: 38px; height: 22px; border-radius: 11px; border: 0; padding: 0; background: var(--rule-strong); position: relative; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-paper-2); transition: transform var(--dur-micro) var(--ease-out); }
+.sw[aria-checked="true"] { background: var(--color-accent); }
+.sw[aria-checked="true"]::after { transform: translateX(16px); }
+.ibtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--rule); background: var(--color-paper-2); color: var(--color-ink); display: grid; place-items: center; cursor: pointer; padding: 0; transition: background-color var(--dur-micro) var(--ease-out); }
+.ibtn:hover { background: var(--color-paper-3); }
+.ibtn svg { width: 16px; height: 16px; }
+.plabel { font-size: .82rem; color: var(--color-muted); display: block; margin-bottom: 5px; }
+.drow { display: flex; gap: 6px; }
+.psel { flex: 1; min-width: 0; height: 32px; border: 1px solid var(--rule); border-radius: 8px; background: var(--color-paper-2); color: var(--color-ink); font: 400 .92rem var(--font-body); padding: 0 8px; }
+.wchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.wchip { font-size: .86rem; padding: 3px 4px 3px 9px; border-radius: 6px; background: var(--tint-domain); display: inline-flex; align-items: center; gap: 2px; }
+.wchip.fixed { padding-right: 9px; }
+.wchip button { border: 0; background: none; color: var(--color-ink-2); cursor: pointer; width: 20px; height: 20px; border-radius: 4px; font: 400 1rem/1 var(--font-body); padding: 0; }
+.wchip button:hover { background: rgba(12, 122, 120, .2); }
+.addrow { display: flex; gap: 6px; margin-top: 8px; }
+.addrow input { flex: 1; min-width: 0; height: 34px; border: 1px solid var(--rule); border-radius: 8px; background: var(--color-paper); font: 400 .92rem var(--font-body); padding: 0 10px; color: var(--color-ink); }
+.addrow .btn-sm { height: 34px; }
+.backrow { display: flex; align-items: center; gap: 8px; }
+.backrow .btn-text { padding: 0 6px; height: 30px; }
+.sites { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sites li { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--color-paper-3); border-radius: 6px; padding: 6px 6px 6px 12px; }
+.sites .mono { font-size: .88rem; }
+.downbox { display: grid; gap: 10px; }
+.downbox pre { font-size: .8rem; padding: 10px 12px; }
+@media (max-width: 860px) { .popsec { grid-template-columns: 1fr; gap: 32px; } .stage { padding: 16px 12px; } }
+
+/* compare */
+.why { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 36px; }
+.why .panel h3 { font-size: 1.12rem; }
+.why .panel p:last-child { color: var(--color-ink-2); }
+.cmp { min-width: 640px; }
+.cmp th, .cmp td { text-align: center; }
+.cmp th:first-child, .cmp td:first-child { text-align: left; white-space: normal; }
+.cmp tbody th { background: none; color: var(--color-ink); font-size: .98rem; font-weight: 500; }
+.cmp .me { background: var(--color-paper); }
+.cmp th.me { background: var(--color-ink); color: var(--color-paper-2); }
+.cmp .y { font-weight: 500; }
+.cmp .n, .cmp .na { color: var(--color-muted); }
+@media (max-width: 860px) { .why { grid-template-columns: 1fr; } }
+
+/* install */
+.inst { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; align-items: start; }
+.isteps { list-style: none; margin: 0; padding: 0; display: grid; }
+.istep { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding-block: 22px; border-top: var(--rule-tear); }
+.istep:first-child { border-top: 0; padding-top: 0; }
+.istep .k { font: 700 1.6rem/1.1 var(--font-head); grid-row: span 3; letter-spacing: -.03em; }
+.istep h3 { font-size: 1.2rem; }
+.istep > :not(.k) { grid-column: 2; min-width: 0; }
+.istep p { margin-top: 4px; }
+.cmd { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--color-paper-3); border-radius: 6px; padding: 6px 6px 6px 14px; margin-top: 10px; min-width: 0; }
+.cmd code { font-size: .86rem; overflow-x: auto; white-space: nowrap; min-width: 0; padding-block: 6px; }
+.cmd .btn-sm { height: 32px; padding: 0 10px; flex: none; }
+.istep .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.needs { background: var(--color-paper-2); border: 1px solid var(--rule); border-radius: 6px; padding: 22px; display: grid; gap: 14px; }
+.needs ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.needs li { padding: 10px 0; border-top: var(--rule-tear); display: grid; gap: 1px; }
+.needs li span:first-child { font-size: .85rem; color: var(--color-muted); }
+@media (max-width: 860px) { .inst { grid-template-columns: 1fr; gap: 32px; } }
+
+/* under the hood */
+.hood { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.arch { display: grid; gap: 0; justify-items: stretch; min-width: 0; }
+.node { background: var(--color-paper-2); border: 1px solid var(--color-ink); border-radius: 6px; padding: 16px; display: grid; gap: 6px; min-width: 0; }
+.node.later { border: 1.5px dashed var(--rule-strong); background: transparent; color: var(--color-muted); }
+.arch-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; }
+.link { display: grid; justify-items: center; padding: 10px 0; gap: 2px; color: var(--color-ink-2); font-size: .9rem; }
+.link::before, .link::after { content: ""; width: 0; height: 12px; border-left: var(--rule-tear); }
+.port { display: grid; gap: 8px; padding-top: 10px; border-top: var(--rule-tear); margin-top: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: .86rem; padding: 4px 9px; border-radius: 6px; background: var(--color-paper-3); border: 1px solid transparent; }
+.chip.next { background: none; border: 1.5px dashed var(--rule-strong); color: var(--color-muted); }
+pre { margin: 0; font: 400 .84rem/1.65 var(--font-mono); background: var(--color-paper-3); border-radius: 6px; padding: 16px; overflow-x: auto; min-width: 0; }
+.code-col { display: grid; gap: 10px; min-width: 0; }
+.adr { margin-top: 36px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.adr > div { display: grid; gap: 6px; align-content: start; padding-top: 14px; border-top: var(--rule-tear); }
+@media (max-width: 860px) { .hood { grid-template-columns: 1fr; } .adr { grid-template-columns: 1fr; } }
+
+/* roadmap: one track, three stops. Solid where built, dashed where planned. */
+.track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stop { position: relative; padding: 64px 28px 0 0; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.stop::before { content: ""; position: absolute; left: 0; right: 0; top: 18px; border-top: 2px dashed var(--rule-strong); }
+.stop.done::before { border-top: 3px solid var(--color-ink); top: 17px; }
+.stop:last-child::before { right: 28px; }
+.stop:last-child::after { content: ""; position: absolute; right: 28px; top: 13px; width: 10px; height: 10px; border-top: 2px solid var(--rule-strong); border-right: 2px solid var(--rule-strong); transform: rotate(45deg); }
+.pin { position: absolute; left: 0; top: 4px; width: 30px; height: 30px; border-radius: 50%; background: var(--color-paper); border: 2px solid var(--color-ink); z-index: 1; }
+.done .pin { background: var(--color-ink); }
+.done .pin::after { content: ""; position: absolute; left: 9px; top: 6px; width: 7px; height: 12px; border: solid var(--color-paper-2); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.later .pin { border-style: dashed; border-color: var(--color-muted); }
+.here { position: absolute; top: 4px; right: 28px; height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 6px; background: var(--color-ink); color: var(--color-paper-2); font-size: .82rem; font-weight: 500; z-index: 1; }
+.stop .when { font-size: .88rem; color: var(--color-muted); }
+.stop h3 { font-size: 1.35rem; }
+.stop ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.stop li { position: relative; padding-left: 24px; font-size: 1rem; line-height: 1.4; }
+.stop li::before { content: ""; position: absolute; left: 2px; top: .58em; width: 10px; border-top: 1.5px solid var(--color-ink); }
+.done li::before { left: 4px; top: .2em; width: 5px; height: 10px; border: solid var(--color-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.later li { color: var(--color-ink-2); }
+.later li::before { border-top-style: dashed; border-top-color: var(--color-muted); }
+.limits { margin-top: 44px; border: 1.5px dashed var(--rule-strong); border-radius: 6px; padding: 20px 22px; display: grid; gap: 10px; }
+.limits ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; }
+@media (max-width: 860px) {
+  .track { grid-template-columns: 1fr; }
+  .stop { padding: 0 0 40px 50px; }
+  .stop::before, .stop.done::before { left: 14px; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 2px dashed var(--rule-strong); }
+  .stop.done::before { left: 13px; border-left: 3px solid var(--color-ink); }
+  .stop:last-child { padding-bottom: 0; }
+  .stop:last-child::before { right: auto; bottom: 0; }
+  .stop:last-child::after { display: none; }
+  .pin { top: 0; }
+  .here { position: static; justify-self: start; height: 26px; }
+}
+
+/* built by */
+.maker { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 56px; align-items: center; }
+.mlogo { display: grid; justify-items: center; gap: 14px; }
+.mlogo svg { width: 132px; height: 132px; }
+.wm { font: 700 3.2rem/1 var(--font-head); color: var(--marka-ink); letter-spacing: -.02em; }
+.wm .bl { color: var(--marka-green); filter: blur(3px); opacity: .75; }
+.maker-copy { display: grid; gap: 16px; max-width: 40rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 10px 36px; margin-top: 6px; }
+.facts div { display: grid; gap: 2px; }
+@media (max-width: 860px) { .maker { grid-template-columns: 1fr; gap: 28px; justify-items: start; } .mlogo { justify-items: start; } }
+
+footer { border-top: var(--rule-tear); padding-block: 36px 48px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; justify-content: space-between; }
+footer .brand svg { width: 28px; height: 28px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="gp" d="M256 48 C352 48 424 120 424 224 L424 398 C424 440 390 456 362 434 C338 416 318 420 302 444 C288 464 272 472 256 472 C240 472 224 464 210 444 C194 420 174 416 150 434 C122 456 88 440 88 398 L88 224 C88 120 160 48 256 48 Z"/>
+    <clipPath id="gclip"><use href="#gp"/></clipPath>
+    <linearGradient id="gbody" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF1F6"/></linearGradient>
+    <linearGradient id="ggloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+    <symbol id="ghost" viewBox="0 0 512 512">
+      <use href="#gp" fill="url(#gbody)"/>
+      <g clip-path="url(#gclip)"><path d="M120 210 C120 128 180 74 256 74 C332 74 392 128 392 210 C340 176 172 176 120 210 Z" fill="url(#ggloss)"/></g>
+      <use href="#gp" fill="none" stroke="#0A0B0F" stroke-width="14" stroke-linejoin="round"/>
+      <g fill="#0A0B0F" stroke="#0A0B0F" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M126 192 C126 180 136 172 150 172 L362 172 C376 172 386 180 386 192" fill="none" stroke-width="16"/>
+        <rect x="240" y="170" width="32" height="30" stroke="none"/>
+        <path stroke-width="10" d="M134 200 C134 188 142 182 154 182 L236 182 C248 182 254 190 252 202 L246 238 C240 268 220 282 192 282 C162 282 142 266 138 238 Z"/>
+        <path stroke-width="10" d="M378 200 C378 188 370 182 358 182 L276 182 C264 182 258 190 260 202 L266 238 C272 268 292 282 320 282 C350 282 370 266 374 238 Z"/>
+      </g>
+    </symbol>
+    <!-- Marka team logo: a padlock shackle over a stacked tree, with a keyhole in the trunk line -->
+    <symbol id="marka" viewBox="0 0 280 280">
+      <rect width="280" height="280" rx="50" style="fill:var(--marka-green)"/>
+      <path d="M117 98 V66 A23 23 0 0 1 163 66 V98 Z" style="fill:none;stroke:var(--marka-cream);stroke-width:11;stroke-linejoin:round"/>
+      <g style="fill:var(--marka-cream)">
+        <rect x="92" y="111" width="96" height="14" rx="3"/>
+        <rect x="76" y="135" width="128" height="15" rx="3"/>
+        <rect x="59" y="159" width="162" height="15" rx="3"/>
+        <rect x="42" y="183" width="196" height="15" rx="3"/>
+        <rect x="127" y="208" width="26" height="30" rx="3"/>
+      </g>
+      <g style="fill:var(--marka-green)">
+        <circle cx="140" cy="142" r="7.5"/>
+        <rect x="137" y="142" width="6" height="32"/>
+      </g>
+    </symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" id="top"><svg role="img" aria-label="Ghost Agent logo"><use href="#ghost"/></svg>Ghost Agent</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#demo">Demo</a>
+      <a href="#how">How it works</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#compare">Compare</a>
+      <a href="#install">Install</a>
+      <a href="#roadmap">Roadmap</a>
+      <a class="btn btn-primary btn-sm" href="#try">Try the demo</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<section class="sec hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1>Catch sensitive data before the AI sees it.</h1>
+      <p class="lead">Ghost Agent underlines personal and confidential data while you type or paste into an AI chat. Hide it or rephrase it before you press Send. All the checking runs on your own machine.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#try">Try the demo</a>
+        <a class="btn btn-secondary" href="#install">Install it</a>
+      </div>
+      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in any Chromium browser, on any site. Besides names, IDs and contact details, it recognises sensitive terms from health, education, courts, industry and religious life.</span></p>
+    </div>
+    <div class="mock" role="group" aria-label="Interactive example of Ghost Agent in a message field">
+      <div class="card" id="heroCard" style="min-height:152px"></div>
+      <div class="box">
+        <p class="field" id="heroField"></p>
+        <div class="foot"><span class="hint">Message the AI</span><span class="btn btn-primary btn-sm" aria-hidden="true">Send</span></div>
+        <div class="gbar" aria-hidden="true"><span class="gtab"><span class="n" id="heroCount">5</span> to check</span></div>
+      </div>
+      <p class="sr" role="status" id="heroStatus"></p>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="sec" id="demo">
+  <div class="wrap">
+    <div class="head">
+      <h2>See it work on ChatGPT</h2>
+      <p class="lead">A short screen recording of the real extension on chatgpt.com, with the Engine running on the same computer. The demo note is pasted, the names and the fødselsnummer are hidden, and the AI writes its letter around the Placeholders.</p>
+    </div>
+    <figure class="video">
+      <video autoplay muted loop playsinline preload="auto" poster="assets/demo-poster.jpg" width="1400" height="680" aria-describedby="videoCap">
+        <source src="assets/demo.mp4" type="video/mp4">
+        <p>Your browser can't play this video. <a href="assets/demo.mp4">Download the recording</a> instead.</p>
+      </video>
+      <figcaption class="muted sm" id="videoCap">Recorded with the synthetic demo note. No real patient data was used.</figcaption>
+    </figure>
+    <div class="try-head" id="try">
+      <h3>Now try it yourself</h3>
+      <p class="lead">A nurse wants an AI chat to help write a referral letter, and pastes in a patient note with a name, a fødselsnummer and a diagnosis. Sent as it is, that is a GDPR breach. This simulated field already holds the note: hover or tap an underline, hide a few values, rephrase a sentence, then send.</p>
+    </div>
+    <div class="demo-top">
+      <p class="muted sm">Simulated demo. All names and numbers are synthetic; the fødselsnummer has a valid checksum and belongs to no one.</p>
+      <button class="btn btn-secondary btn-sm" type="button" id="reset">Reset demo</button>
+    </div>
+    <div class="chat">
+      <div class="thread" id="thread" hidden>
+        <div class="thread-head">
+          <p class="muted sm" id="summary"></p>
+        </div>
+        <div class="msg you"><div class="who">You sent</div><p id="youText"></p></div>
+        <div class="msg ai"><div class="who">The AI answered</div><p id="aiText"></p></div>
+      </div>
+      <div class="fieldwrap" id="wrap">
+        <div class="box" id="box">
+          <div class="field" id="field" role="group" aria-label="Simulated message field containing the demo note"></div>
+          <div class="foot"><span class="hint">Message the AI (simulated)</span><button class="btn btn-primary btn-sm" type="button" id="send">Send</button></div>
+          <div class="gbar" id="gbar" hidden>
+            <div class="gmenu" id="gmenu" hidden>
+              <button type="button" id="hideAll">Hide all</button>
+              <div class="rule"></div>
+              <button type="button" id="undo">Undo</button>
+            </div>
+            <button class="gtab" type="button" id="gtab" aria-expanded="false" aria-haspopup="true"><span class="n" id="gcount">7</span> to check</button>
+          </div>
+        </div>
+        <div class="card" id="card" hidden role="dialog" aria-label="Actions for this value"></div>
+      </div>
+      <p class="sr" id="status" role="status"></p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>How it works</h2>
+      <p class="lead">Five things happen between pasting a note and reading the answer.</p>
+    </div>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-copy">
+          <span class="step-n" aria-hidden="true">1</span>
+          <h3>Underline</h3>
+          <p>Ghost Agent checks the field 300 ms after your last keystroke, or at once on paste. Each sensitive value gets a wavy underline in the colour of its Category. The site's own editor is never changed.</p>
+        </div>
+        <div class="vis">
+          <p>fnr <span class="ul red">01019000083</span>, <span class="ul amber">Kari</span> har <span class="ul teal">diabetes</span></p>
+          <div class="legend">
+            <span class="ul red">IDs, cards, secrets</span>
+            <span class="ul amber">Names and contact data</span>
+            <span class="ul teal">Domain words and your own words</span>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-copy">
+          <span class="step-n" aria-hidden="true">2</span>
+          <h3>Open the Card</h3>
+          <p>Hover an underlined value and a Card opens above it. It names the Category, shows the Placeholder that would replace the value, and offers three choices: Hide, Rephrase or Ignore.</p>
+        </div>
+        <div class="vis">
+          <div class="card">
+            <span class="catname ul amber">Phone number</span>
+            <div class="val-row"><span class="val">+47 912 34 567</span><span class="stamp">hide as <b>[PHONE_1]</b></span></div>
+            <hr class="tear">
+            <div class="acts">
+              <span class="btn btn-primary btn-sm">Hide</span>
+              <span class="btn btn-secondary btn-sm">Rephrase</span>
+              <span class="btn btn-text btn-sm">Ignore</span>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-copy">
+          <span class="step-n" aria-hidden="true">3</span>
+          <h3>Hide</h3>
+          <p>Hide swaps one value for a typed, numbered Placeholder. The same value always gets the same Placeholder, so the AI can tell two people apart. Hide all does the whole field in one step, and Undo puts the text back.</p>
+        </div>
+        <div class="vis">
+          <div class="swap"><span>fnr <span class="ul red">01019000083</span></span><span class="arrow" aria-hidden="true">→</span><span>fnr [FNR_1]</span></div>
+          <div class="gstatic">
+            <div class="gbar">
+              <div class="gmenu" role="presentation"><button type="button" tabindex="-1">Hide all (6)</button><div class="rule"></div><button type="button" tabindex="-1">Undo · Hide [FNR_1]</button></div>
+              <span class="gtab" aria-expanded="true"><span class="n">6</span> to check</span>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-copy">
+          <span class="step-n" aria-hidden="true">4</span>
+          <h3>Rephrase</h3>
+          <p>Rephrase rewrites the whole sentence into a more general one, using a small language model that runs on your computer. You read the new sentence first and choose Accept or Reject.</p>
+        </div>
+        <div class="vis">
+          <p class="strike">Kari, 34 år, jobber som lærer i Bærum og har diabetes type 1.</p>
+          <div class="card">
+            <p class="note">New sentence</p>
+            <p class="sunk">En kvinne i 30-årene som jobber i skolen, har en kronisk sykdom.</p>
+            <div class="acts"><span class="btn btn-primary btn-sm">Accept</span><span class="btn btn-secondary btn-sm">Reject</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-copy">
+          <span class="step-n" aria-hidden="true">5</span>
+          <h3>Read the answer</h3>
+          <p>The AI answers with the same Placeholders, such as <span class="ph">[PERSON_1]</span>, so its answer keeps the structure of your text. The originals wait in the Vault, which lives in memory for this tab only.</p>
+        </div>
+        <div class="vis">
+          <p class="muted sm">The AI's answer</p>
+          <p>Jeg henviser <span class="ph">[PERSON_1]</span>, som har <span class="ph">[HEALTH_1]</span>.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section class="sec" id="privacy">
+  <div class="wrap priv">
+    <div class="priv-copy">
+      <h2>Ghost Agent never sends your text anywhere.</h2>
+      <p class="lead">Ghost Agent exists to keep sensitive data away from third-party services, so it must not send that data anywhere itself. This is a hard rule, even where a cloud model would be better or faster.</p>
+      <ul class="priv-list">
+        <li>Detection and Rephrase both run on your computer.</li>
+        <li>No cloud APIs and no usage tracking.</li>
+        <li>No logging of your text, not even debug logs.</li>
+        <li>The Engine listens on <span class="mono">127.0.0.1</span> only.</li>
+        <li>The Vault lives in memory and is cleared when the browser closes.</li>
+      </ul>
+    </div>
+    <svg class="diagram" viewBox="0 0 460 340" role="img" aria-labelledby="dtitle ddesc">
+      <title id="dtitle">Where your text travels</title>
+      <desc id="ddesc">The browser extension talks to the local engine on localhost. A crossed-out dashed arrow from the engine to a third-party cloud shows that no text is sent there.</desc>
+      <rect class="zone" x="10" y="10" width="440" height="212" rx="14"/>
+      <text class="t tb" x="28" y="40">Your computer</text>
+      <rect class="box1" x="30" y="62" width="170" height="130" rx="8"/>
+      <text class="t tb" x="46" y="94">Browser extension</text>
+      <text class="t ts" x="46" y="120">Underlines, Card,</text>
+      <text class="t ts" x="46" y="140">Ghost bar, Vault</text>
+      <rect class="box1" x="260" y="62" width="170" height="130" rx="8"/>
+      <text class="t tb" x="276" y="94">Local engine</text>
+      <text class="tm" x="276" y="120">127.0.0.1:8765</text>
+      <text class="t ts" x="276" y="140">Detect, Rephrase</text>
+      <line class="ln" x1="204" y1="127" x2="254" y2="127"/>
+      <path class="head" d="M258 127 L249 122 L249 132 Z"/>
+      <text class="t ts" x="230" y="114" text-anchor="middle">HTTP</text>
+      <line class="dash" x1="345" y1="196" x2="345" y2="276"/>
+      <circle class="bg" cx="345" cy="244" r="15"/>
+      <line class="cross" x1="337" y1="236" x2="353" y2="252"/>
+      <line class="cross" x1="353" y1="236" x2="337" y2="252"/>
+      <text class="t ts" x="322" y="249" text-anchor="end">No text goes here</text>
+      <rect class="cloud" x="260" y="282" width="170" height="46" rx="8"/>
+      <text class="t ts" x="345" y="310" text-anchor="middle">Third-party cloud</text>
+    </svg>
+  </div>
+</section>
+
+<!-- WHAT IT FINDS -->
+<section class="sec" id="finds">
+  <div class="wrap">
+    <div class="head">
+      <h2>What it finds</h2>
+      <p class="lead">Each Finding comes from a Detector on your computer. Numbers must pass their checksum, so an order number like <code>ordrenummer 01019000084</code> is left alone.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th scope="col">Category</th><th scope="col">How it is found</th><th scope="col">Placeholder</th><th scope="col">Underline</th></tr></thead>
+        <tbody>
+          <tr><td>Fødselsnummer</td><td>11 digits, valid mod-11 checksum, first digit 0–3</td><td class="ph">[FNR_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>D-nummer</td><td>Same checks, first digit 4–7</td><td class="ph">[DNR_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>Bank account</td><td>11 digits, valid mod-11 checksum, optional 4.2.5 grouping</td><td class="ph">[ACCOUNT_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>Payment card</td><td>13–19 digits, valid Luhn checksum</td><td class="ph">[CARD_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>IBAN</td><td>Country code, check digits and account, valid mod-97</td><td class="ph">[IBAN_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>Secret</td><td>Keys starting <code>sk-</code>, <code>ghp_</code> or <code>AKIA</code>, and JWTs</td><td class="ph">[SECRET_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>Password</td><td>The value after <code>password:</code>, <code>passord:</code>, <code>pwd:</code> or <code>pw:</code></td><td class="ph">[PASSWORD_n]</td><td><span class="ul red">red</span></td></tr>
+          <tr><td>Email address</td><td>Any email address</td><td class="ph">[EMAIL_n]</td><td><span class="ul amber">amber</span></td></tr>
+          <tr><td>Phone number</td><td>Norwegian 8-digit numbers with optional +47 or 0047, and international + numbers</td><td class="ph">[PHONE_n]</td><td><span class="ul amber">amber</span></td></tr>
+          <tr><td>Person name</td><td>A capitalised word on the SSB first-name list</td><td class="ph">[PERSON_n]</td><td><span class="ul amber">amber</span></td></tr>
+          <tr><td>Health</td><td>Diagnoses, medicines and terms like innlagt and sykemeldt, in Bokmål and English</td><td class="ph">[HEALTH_n]</td><td><span class="ul teal">teal</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note-box">
+      <p class="sm muted">The Health row belongs to the Health Domain. In the Free Domain, which is the default, only the Base Categories above it are found.</p>
+      <p class="sm muted">On top of these rules, the GLiNER Detector, a small language model running on your computer, finds surnames, places and addresses that no list or checksum can catch.</p>
+    </div>
+  </div>
+</section>
+
+<!-- POPUP -->
+<section class="sec" id="popup">
+  <div class="wrap popsec">
+    <div>
+      <div class="head">
+        <h2>Tune it from the toolbar</h2>
+        <p class="lead">Click the ghost in the browser toolbar to choose where Ghost Agent runs and what it looks for. Nothing here leaves the extension.</p>
+      </div>
+      <ul class="pop-feats">
+        <li><strong>A switch per site</strong><span class="muted sm">Turn Ghost Agent off on a site you trust, and back on with one click.</span></li>
+        <li><strong>Domains</strong><span class="muted sm">Free finds the Base Categories. Health, Education, Courts, Industrial and Religious each add the sensitive terms of that sector. Make your own with the plus button.</span></li>
+        <li><strong>Your own words</strong><span class="muted sm">Add client names, project code names or places the Detectors can't know. They get a teal underline, like Domain words.</span></li>
+        <li><strong>Engine status</strong><span class="muted sm">If the local Engine isn't running, the icon shows a red <b>!</b> and the popup tells you how to start it.</span></li>
+      </ul>
+    </div>
+    <div class="stage">
+      <div class="seg" role="group" aria-label="Choose a popup view">
+        <button type="button" data-show="domain" aria-pressed="true">Domain</button>
+        <button type="button" data-show="settings" aria-pressed="false">Settings</button>
+        <button type="button" data-show="down" aria-pressed="false">Engine down</button>
+      </div>
+      <div class="tbar" aria-hidden="true">
+        <span class="url">chatgpt.com</span>
+        <span class="ext"><svg><use href="#ghost"/></svg><span class="badge" id="badge" hidden>!</span></span>
+      </div>
+      <div class="pop" id="pop" role="group" aria-label="Ghost Agent popup, interactive illustration">
+        <div class="pop-head">
+          <svg aria-hidden="true"><use href="#ghost"/></svg>
+          <strong>Ghost Agent</strong>
+          <span class="st" id="popStatus">Engine running</span>
+        </div>
+
+        <div class="pop-body" data-view="domain">
+          <div class="prow">
+            <span class="site"><span id="siteState">On</span> for <span class="mono">chatgpt.com</span></span>
+            <span class="prow-r">
+              <button class="sw" type="button" role="switch" aria-checked="true" id="siteSwitch" aria-label="Ghost Agent on chatgpt.com"></button>
+              <button class="ibtn" type="button" data-go="settings" aria-label="Settings"><svg aria-hidden="true"><use href="#gear"/></svg></button>
+            </span>
+          </div>
+          <div>
+            <label class="plabel" for="domSel">Domain</label>
+            <div class="drow">
+              <select class="psel" id="domSel">
+                <option value="mine" selected>My clinic</option>
+                <option value="health">Health (built-in)</option>
+                <option value="free">Free (built-in)</option>
+                <option value="education">Education (built-in)</option>
+                <option value="courts">Courts (built-in)</option>
+                <option value="industrial">Industrial (built-in)</option>
+                <option value="religious">Religious (built-in)</option>
+              </select>
+              <button class="ibtn" type="button" aria-label="New Domain" id="newDom"><svg aria-hidden="true"><use href="#plus"/></svg></button>
+            </div>
+          </div>
+          <div id="wordsBox">
+            <span class="plabel">Your words</span>
+            <div class="wchips" id="words"></div>
+            <form class="addrow" id="addWord">
+              <input id="wordIn" maxlength="40" placeholder="Add a word" aria-label="Add a word" autocomplete="off">
+              <button class="btn btn-secondary btn-sm" type="submit">Add</button>
+            </form>
+          </div>
+          <p class="muted sm" id="builtinNote" hidden></p>
+        </div>
+
+        <div class="pop-body" data-view="settings" hidden>
+          <div class="backrow"><button class="btn btn-text btn-sm" type="button" data-go="domain">← Back</button><strong style="font-weight:500">Settings</strong></div>
+          <div>
+            <span class="plabel">Sites</span>
+            <ul class="sites" id="sites">
+              <li><span class="mono">* (all sites)</span><button class="btn btn-text btn-sm" type="button" data-rm>Remove</button></li>
+            </ul>
+            <form class="addrow" id="addSite">
+              <input id="siteIn" maxlength="60" placeholder="claude.ai, or * for all" aria-label="Add a site" autocomplete="off">
+              <button class="btn btn-secondary btn-sm" type="submit">Add</button>
+            </form>
+          </div>
+          <p class="muted sm">Ghost Agent runs on the sites listed here. <span class="mono">*</span> means every site.</p>
+        </div>
+
+        <div class="pop-body" data-view="down" hidden>
+          <div class="downbox">
+            <strong style="font-weight:500">Start Ghost Agent engine</strong>
+            <p class="muted sm">Underlines and Rephrase are paused until the Engine answers. Run this in the project folder:</p>
+            <pre>cd engine &amp;&amp; uv run ghost-engine</pre>
+            <div><button class="btn btn-primary btn-sm" type="button" data-go="domain">Check again</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="sec" id="compare">
+  <div class="wrap">
+    <div class="head">
+      <h2>Why not just…?</h2>
+      <p class="lead">There are other ways to keep personal data out of an AI chat. Each one gives up something Ghost Agent keeps.</p>
+    </div>
+    <div class="why">
+      <div class="panel">
+        <h3>…tell people to be careful?</h3>
+        <p>A busy nurse pastes the whole note in one go. Nothing on screen points at the fødselsnummer in line two. Ghost Agent does, the moment the text lands in the field.</p>
+      </div>
+      <div class="panel">
+        <h3>…ban AI chat at work?</h3>
+        <p>People who find AI useful keep using it, on a phone or at home, where nobody can help them. Ghost Agent lets them keep the tool and drop the data.</p>
+      </div>
+      <div class="panel">
+        <h3>…send the text to a redaction service?</h3>
+        <p>Then the patient note goes to one more third party before it is cleaned. Ghost Agent's Detectors and language model run on your own computer.</p>
+      </div>
+      <div class="panel">
+        <h3>…buy an enterprise AI plan?</h3>
+        <p>It changes who keeps the data, not whether it leaves. The AI provider still receives the real name and fødselsnummer. With Ghost Agent it receives <span class="ph">[PERSON_1]</span> and <span class="ph">[FNR_1]</span>.</p>
+      </div>
+    </div>
+    <div class="scroll">
+      <table class="cmp">
+        <thead><tr><th scope="col"><span class="sr">Question</span></th><th scope="col" class="me">Ghost Agent</th><th scope="col">Ban AI chat</th><th scope="col">Redaction service</th><th scope="col">Enterprise AI plan</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">The checking happens on your machine</th><td class="me y">Yes</td><td class="na">–</td><td class="n">No</td><td class="na">–</td></tr>
+          <tr><th scope="row">The AI never sees the values you hide</th><td class="me y">Yes</td><td class="na">Nothing is sent</td><td class="y">Yes</td><td class="n">No</td></tr>
+          <tr><th scope="row">Points at risky values while you write</th><td class="me y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
+          <tr><th scope="row">People keep their AI tool</th><td class="me y">Yes</td><td class="n">No</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+          <tr><th scope="row">You read the answer with real values</th><td class="me n">Not yet</td><td class="na">–</td><td class="na">Depends on the service</td><td class="y">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="sec" id="install">
+  <div class="wrap">
+    <div class="head">
+      <h2>Run it yourself</h2>
+      <p class="lead">Ghost Agent has two parts: a local Engine and a browser extension. Start the Engine, load the extension, and open ChatGPT.</p>
+    </div>
+    <div class="inst">
+      <ol class="isteps">
+        <li class="istep">
+          <span class="k" aria-hidden="true">1</span>
+          <h3>Get the code</h3>
+          <div class="cmd"><code id="c1">git clone https://github.com/dimassolt/marka_mvp_2.git</code><button class="btn btn-text btn-sm" type="button" data-copy="c1">Copy</button></div>
+          <div class="row"><a class="btn btn-secondary btn-sm" href="https://github.com/dimassolt/marka_mvp_2">Open the repository</a></div>
+        </li>
+        <li class="istep">
+          <span class="k" aria-hidden="true">2</span>
+          <h3>Start the Engine</h3>
+          <p>You need Python and <span class="mono">uv</span>. The Engine loads its models once at start, then waits on your machine only.</p>
+          <div class="cmd"><code id="c2">cd engine &amp;&amp; uv run ghost-engine</code><button class="btn btn-text btn-sm" type="button" data-copy="c2">Copy</button></div>
+          <p class="muted sm">It is ready when <span class="mono">http://127.0.0.1:8765/health</span> answers <span class="mono">{"status": "ok"}</span>.</p>
+        </li>
+        <li class="istep">
+          <span class="k" aria-hidden="true">3</span>
+          <h3>Load the extension</h3>
+          <p>Build it as the README describes. Then open <span class="mono">opera://extensions</span> or <span class="mono">chrome://extensions</span>, turn on Developer mode, choose Load unpacked and pick the built folder.</p>
+        </li>
+        <li class="istep">
+          <span class="k" aria-hidden="true">4</span>
+          <h3>Try it</h3>
+          <p>Open chatgpt.com and paste the demo note. The sensitive values get underlined almost at once.</p>
+          <div class="row"><button class="btn btn-primary btn-sm" type="button" id="copyNote">Copy the demo note</button></div>
+        </li>
+      </ol>
+      <aside class="needs" aria-label="Requirements">
+        <h3 style="font-size:1.15rem">What you need</h3>
+        <ul>
+          <li><span>Engine</span><span>Python with <span class="mono">uv</span></span></li>
+          <li><span>Browser</span><span>Any Chromium browser</span></li>
+          <li><span>Sites</span><span>Any site. Plain textarea fields are not scanned yet.</span></li>
+          <li><span>Network</span><span>None at run time. The Engine listens on <span class="mono">127.0.0.1:8765</span> only.</span></li>
+        </ul>
+        <p class="muted sm">If the toolbar icon shows a red <b>!</b>, the Engine isn't running. Start it and the underlines come back.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- UNDER THE HOOD -->
+<section class="sec" id="hood">
+  <div class="wrap">
+    <div class="head">
+      <h2>Under the hood</h2>
+      <p class="lead">A thin browser extension draws the highlights and Cards. The models are Python, so they live in a local Engine that the extension calls over localhost.</p>
+    </div>
+    <div class="hood">
+      <div class="arch">
+        <div class="arch-top">
+          <div class="node"><h4>Extension</h4><p class="sm">Chromium MV3, WXT and TypeScript</p><p class="sm muted">Underlines, Card, Ghost bar, Vault</p></div>
+          <div class="node later"><h4>Desktop App</h4><p class="sm">Later</p></div>
+        </div>
+        <div class="link"><span class="mono">HTTP 127.0.0.1:8765</span></div>
+        <div class="node">
+          <h4>Engine</h4>
+          <p class="sm">Python, uv and FastAPI, one core with swappable adapters</p>
+          <div class="port">
+            <p class="sm"><strong style="font-weight:500">Detector port</strong></p>
+            <div class="chips"><span class="chip">Regex</span><span class="chip">First-name list</span><span class="chip">Health keywords</span><span class="chip">GLiNER</span></div>
+          </div>
+          <div class="port">
+            <p class="sm"><strong style="font-weight:500">Rephraser port</strong></p>
+            <div class="chips"><span class="chip">Qwen3 1.7B Q4_K_M through llama-cpp-python</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="code-col">
+        <p class="sm muted">Offsets are counted in UTF-16 units, the way JavaScript counts. Findings never overlap.</p>
+<pre>POST /detect
+{ "text": "Kari har diabetes, fnr 01019000083",
+  "domain": "health" }
+
+{ "findings": [
+  { "start": 0,  "end": 4,  "category": "person_name",
+    "confidence": 0.6 },
+  { "start": 9,  "end": 17, "category": "health",
+    "confidence": 0.8 },
+  { "start": 23, "end": 34, "category": "fodselsnummer",
+    "confidence": 0.99 } ] }</pre>
+      </div>
+    </div>
+    <div class="adr">
+      <div><h4>Processing stays local</h4><p class="sm muted">Cloud APIs, tracking and logging of user text are ruled out, even for debugging.</p></div>
+      <div><h4>Thin extension, local engine</h4><p class="sm muted">One Engine core serves the extension now and a desktop App later, with no detection logic duplicated.</p></div>
+      <div><h4>Typed, numbered Placeholders</h4><p class="sm muted"><span class="mono">[PERSON_1]</span> and <span class="mono">[PERSON_2]</span> let the AI keep the structure and tell two people apart.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="sec" id="roadmap">
+  <div class="wrap">
+    <div class="head">
+      <h2>Where it goes next</h2>
+      <p class="lead">Version 1 works on every site and covers five sectors. Restore comes next, then the desktop App for every program.</p>
+    </div>
+    <ol class="track">
+      <li class="stop done">
+        <span class="pin" aria-hidden="true"></span>
+        <span class="here">We are here</span>
+        <p class="when">Built this weekend</p>
+        <h3>Version 1</h3>
+        <ul>
+          <li>Base and Health Detectors with an overlap rule</li>
+          <li>GLiNER Detector for surnames, places and addresses</li>
+          <li>Underlines, the Card and the Ghost bar</li>
+          <li>Hide, Hide all, Ignore, Undo and the Vault</li>
+          <li>Rephrase with a local model</li>
+          <li>An engine-down badge</li>
+        </ul>
+      </li>
+      <li class="stop next">
+        <span class="pin" aria-hidden="true"></span>
+        <p class="when">Next</p>
+        <h3>Restore and wider coverage</h3>
+        <ul>
+          <li>Restore: real values back in the AI's answer, on your screen only</li>
+          <li>Support for textarea fields</li>
+        </ul>
+      </li>
+      <li class="stop later">
+        <span class="pin" aria-hidden="true"></span>
+        <p class="when">Later</p>
+        <h3>Beyond the browser</h3>
+        <ul>
+          <li>A desktop App for macOS and Windows</li>
+          <li>A warning before Send</li>
+          <li>Unloading the model when idle</li>
+          <li>More Domains</li>
+        </ul>
+      </li>
+    </ol>
+    <div class="limits">
+      <h4>Known limits in version 1</h4>
+      <ul class="sm">
+        <li>The AI's answer keeps its Placeholders. Restore, which shows the real values on your screen only, is planned for the next version.</li>
+        <li>Textarea fields are not scanned yet.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- BUILT BY -->
+<section class="sec" id="team">
+  <div class="wrap maker">
+    <div class="mlogo">
+      <svg role="img" aria-label="Marka logo"><use href="#marka"/></svg>
+      <span class="wm" aria-hidden="true">m<span class="bl">ar</span>ka</span>
+    </div>
+    <div class="maker-copy">
+      <h2>Built by Marka</h2>
+      <p class="lead">Ghost Agent is built by Marka, a team at Oslo Sprint. Nobody should have to choose between getting help from AI and protecting the people whose data they handle.</p>
+      <div class="facts">
+        <div><span class="muted sm">Event</span><span>Oslo Sprint, 6–8 November 2026</span></div>
+        <div><span class="muted sm">Repository</span><a href="https://github.com/dimassolt/marka_mvp_2">github.com/dimassolt/marka_mvp_2</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><svg role="img" aria-label="Ghost Agent logo"><use href="#ghost"/></svg>Ghost Agent</span>
+    <p class="muted sm">By Marka. Every name, number and address on this page is synthetic. This page loads no trackers and nothing from third parties.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var CATS = {
+    fodselsnummer: { name: 'Fødselsnummer', prefix: 'FNR', cls: 'red' },
+    person_name: { name: 'Person name', prefix: 'PERSON', cls: 'amber' },
+    phone: { name: 'Phone number', prefix: 'PHONE', cls: 'amber' },
+    email: { name: 'Email address', prefix: 'EMAIL', cls: 'amber' },
+    place: { name: 'Place', prefix: 'DATA', cls: 'teal' },
+    health: { name: 'Health', prefix: 'HEALTH', cls: 'teal' }
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var field = $('field'), wrap = $('wrap'), cardEl = $('card'), gbar = $('gbar'), gtab = $('gtab'), gmenu = $('gmenu');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var S = [], ignored = new Set(), history = [], vault, card = null, sent = null;
+  var nextId = 1, streamTimer = null, rephTimer = null, closeTimer = null;
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function F(cat, value) { return { id: 'f' + (nextId++), cat: cat, value: value, hidden: false }; }
+  function isF(p) { return typeof p !== 'string'; }
+  function key(c, v) { return c + '|' + (v === 'Kari Nordmann' ? 'Kari' : v); } /* same person, same Placeholder */
+
+  function fresh() {
+    nextId = 1;
+    return [
+      { re: null, rephrased: false, parts: ['Hei! Kan du hjelpe meg å skrive et henvisningsbrev? '] },
+      { re: 'Pasienten er en kvinne i 30-årene. ', rephrased: false, parts: ['Pasienten heter ', F('person_name', 'Kari Nordmann'), ', fnr ', F('fodselsnummer', '01019000083'), '. '] },
+      { re: 'En kvinne i 30-årene som jobber i skolen, har en kronisk sykdom. ', rephrased: false, parts: [F('person_name', 'Kari'), ', 34 år, jobber som lærer i ', F('place', 'Bærum'), ' og har ', F('health', 'diabetes'), ' type 1. '] },
+      { re: 'Hun er borte fra jobb og får medisinsk behandling. ', rephrased: false, parts: ['Hun er ', F('health', 'sykemeldt'), ' og bruker ', F('health', 'insulin'), '.'] }
+    ];
+  }
+
+  function newVault() { return { map: {}, rev: {}, count: {} }; }
+  function peek(cat, value) {
+    var k = key(cat, value);
+    if (vault.map[k]) return vault.map[k];
+    var p = CATS[cat].prefix;
+    return '[' + p + '_' + ((vault.count[p] || 0) + 1) + ']';
+  }
+  function ph(cat, value) {
+    var k = key(cat, value);
+    if (!vault.map[k]) {
+      var p = CATS[cat].prefix;
+      vault.count[p] = (vault.count[p] || 0) + 1;
+      var t = '[' + p + '_' + vault.count[p] + ']';
+      vault.map[k] = t; vault.rev[t] = value;
+    }
+    return vault.map[k];
+  }
+  function isActive(f, s) { return !f.hidden && !s.rephrased && !ignored.has(key(f.cat, f.value)); }
+  function actives() {
+    var out = [];
+    S.forEach(function (s) { s.parts.forEach(function (p) { if (isF(p) && isActive(p, s)) out.push({ f: p, s: s }); }); });
+    return out;
+  }
+  function findF(id) {
+    for (var i = 0; i < S.length; i++) for (var j = 0; j < S[i].parts.length; j++) {
+      var p = S[i].parts[j];
+      if (isF(p) && p.id === id) return { f: p, s: S[i] };
+    }
+    return null;
+  }
+  function say(t) { $('status').textContent = t; }
+
+  /* ---------- rendering ---------- */
+  function renderField() {
+    $('send').disabled = !S.length;
+    if (!S.length) {
+      field.innerHTML = '<div class="empty"><span>Message sent.</span><button class="btn btn-secondary btn-sm" type="button" id="paste">Start over</button></div>';
+      return;
+    }
+    field.innerHTML = S.map(function (s) {
+      if (s.rephrased) return esc(s.re);
+      return s.parts.map(function (p) {
+        if (!isF(p)) return esc(p);
+        if (p.hidden) return esc(ph(p.cat, p.value));
+        if (ignored.has(key(p.cat, p.value))) return esc(p.value);
+        var c = CATS[p.cat];
+        return '<button type="button" class="f ' + c.cls + '" data-id="' + p.id + '" aria-label="' + esc(c.name + ': ' + p.value + '. Open actions') + '">' + esc(p.value) + '</button>';
+      }).join('');
+    }).join('');
+  }
+  function renderBar() {
+    var n = actives().length;
+    gbar.hidden = n === 0;
+    $('gcount').textContent = n;
+    $('hideAll').textContent = 'Hide all (' + n + ')';
+    var u = $('undo');
+    u.disabled = !history.length;
+    u.textContent = history.length ? 'Undo · ' + history[history.length - 1].label : 'Undo';
+    if (n === 0) closeMenu();
+  }
+  function renderThread() {
+    var th = $('thread');
+    if (!sent) { th.hidden = true; return; }
+    th.hidden = false;
+    var shown = sent.tokens.slice(0, sent.shown).join('');
+    $('youText').innerHTML = esc(sent.text);
+    $('aiText').innerHTML = esc(shown);
+    $('summary').textContent = sent.nRaw === 0
+      ? 'The AI received ' + sent.nPh + ' Placeholder' + (sent.nPh === 1 ? '' : 's') + ' and never saw a real value.'
+      : 'The AI received ' + sent.nPh + ' Placeholder' + (sent.nPh === 1 ? '' : 's') + ' and ' + sent.nRaw + ' real value' + (sent.nRaw === 1 ? '' : 's') + '.';
+  }
+  function renderAll() { renderField(); renderBar(); renderThread(); }
+
+  /* ---------- Card ---------- */
+  function drawCard() {
+    if (!card) return;
+    var r = findF(card.fid);
+    if (!r || !isActive(r.f, r.s)) { closeCard(); return; }
+    var c = CATS[r.f.cat], html = '<span class="catname ul ' + c.cls + '">' + esc(c.name) + '</span>';
+    if (card.mode === 'default') {
+      html += '<div class="val-row"><span class="val">' + esc(r.f.value) + '</span><span class="stamp">hide as <b>' + esc(peek(r.f.cat, r.f.value)) + '</b></span></div>' +
+        '<hr class="tear"><div class="acts">' +
+        '<button class="btn btn-primary btn-sm" type="button" data-act="hide">Hide</button>' +
+        '<button class="btn btn-secondary btn-sm" type="button" data-act="rephrase">Rephrase</button>' +
+        '<button class="btn btn-text btn-sm" type="button" data-act="ignore">Ignore</button></div>';
+    } else if (card.mode === 'rephrasing') {
+      html += '<hr class="tear"><p class="note" role="status">Rephrasing…</p><div class="acts" style="margin-top:12px"><button class="btn btn-secondary btn-sm loading" type="button" disabled>Working</button><button class="btn btn-text btn-sm" type="button" data-act="cancel">Cancel</button></div>';
+    } else {
+      html += '<hr class="tear"><p class="note">New sentence</p><p class="sunk">' + esc(r.s.re.trim()) + '</p><div class="acts">' +
+        '<button class="btn btn-primary btn-sm" type="button" data-act="accept">Accept</button>' +
+        '<button class="btn btn-secondary btn-sm" type="button" data-act="reject">Reject</button></div>';
+    }
+    cardEl.innerHTML = html;
+    cardEl.hidden = false;
+    placeCard();
+  }
+  function placeCard() {
+    if (!card || cardEl.hidden) return;
+    var b = field.querySelector('.f[data-id="' + card.fid + '"]');
+    if (!b) return;
+    var w = wrap.getBoundingClientRect(), r = b.getBoundingClientRect();
+    var cw = Math.min(300, w.width - 16);
+    cardEl.style.width = cw + 'px';
+    var left = Math.max(8, Math.min(r.left - w.left, w.width - cw - 8));
+    var top = r.top - w.top - cardEl.offsetHeight - 10;
+    cardEl.style.left = left + 'px';
+    cardEl.style.top = top + 'px';
+  }
+  function openCard(id, pin) {
+    var r = findF(id);
+    if (!r || !isActive(r.f, r.s)) return;
+    cancelClose();
+    if (!card || card.fid !== id) { clearTimeout(rephTimer); card = { fid: id, mode: 'default', pinned: !!pin }; }
+    else if (pin) card.pinned = true;
+    drawCard();
+    if (pin) { var first = cardEl.querySelector('button:not(:disabled)'); if (first) first.focus(); }
+  }
+  function closeCard() { clearTimeout(rephTimer); cancelClose(); card = null; cardEl.hidden = true; cardEl.innerHTML = ''; }
+  function scheduleClose() { cancelClose(); closeTimer = setTimeout(function () { if (card && !card.pinned) closeCard(); }, 280); }
+  function cancelClose() { clearTimeout(closeTimer); }
+  function closeMenu() { gmenu.hidden = true; gtab.setAttribute('aria-expanded', 'false'); }
+
+  /* ---------- actions ---------- */
+  function push(label) { history.push({ snap: JSON.stringify(S), label: label }); }
+  function doHide(id) {
+    var r = findF(id); if (!r) return;
+    var p = ph(r.f.cat, r.f.value);
+    push('Hide ' + p);
+    r.f.hidden = true;
+    closeCard(); renderAll();
+    say('Hidden as ' + p);
+  }
+  function doHideAll() {
+    var list = actives(); if (!list.length) return;
+    push('Hide all');
+    list.forEach(function (x) { ph(x.f.cat, x.f.value); x.f.hidden = true; });
+    closeCard(); closeMenu(); renderAll();
+    say(list.length + ' values hidden');
+  }
+  function doUndo() {
+    var h = history.pop(); if (!h) return;
+    S = JSON.parse(h.snap);
+    closeCard(); closeMenu(); renderAll();
+    say('Undone');
+  }
+  function doIgnore(id) {
+    var r = findF(id); if (!r) return;
+    ignored.add(key(r.f.cat, r.f.value));
+    closeCard(); renderAll();
+    say('Ignored ' + r.f.value);
+  }
+  function doRephrase() {
+    if (!card) return;
+    card.mode = 'rephrasing'; card.pinned = true; drawCard();
+    rephTimer = setTimeout(function () { if (card && card.mode === 'rephrasing') { card.mode = 'preview'; drawCard(); var b = cardEl.querySelector('button'); if (b) b.focus(); } }, 900);
+  }
+  function doAccept() {
+    var r = card && findF(card.fid); if (!r) return;
+    push('Rephrase');
+    r.s.rephrased = true;
+    closeCard(); renderAll();
+    say('Sentence rephrased');
+  }
+
+  /* ---------- send, answer, restore ---------- */
+  function seen(cat, val) {
+    var raw = false;
+    for (var i = 0; i < S.length; i++) {
+      if (S[i].rephrased) continue;
+      for (var j = 0; j < S[i].parts.length; j++) {
+        var p = S[i].parts[j];
+        if (isF(p) && p.cat === cat && p.value === val) { if (p.hidden) return ph(cat, val); raw = true; }
+      }
+    }
+    return raw ? val : null;
+  }
+  function buildAnswer() {
+    var name = seen('person_name', 'Kari Nordmann') || seen('person_name', 'Kari'), fnr = seen('fodselsnummer', '01019000083');
+    var details = [name ? 'Pasient: ' + name : null, fnr ? 'Fødselsnummer: ' + fnr : null].filter(Boolean).join('\n');
+    var about = S[2].rephrased
+      ? 'Pasienten er en kvinne i 30-årene som jobber i skolen, og hun har en kronisk sykdom.'
+      : 'Pasienten er 34 år, jobber som lærer i ' + seen('place', 'Bærum') + ' og har ' + seen('health', 'diabetes') + ' type 1.';
+    var status = S[3].rephrased
+      ? 'Hun er borte fra jobb og får medisinsk behandling.'
+      : 'Hun er ' + seen('health', 'sykemeldt') + ' og bruker ' + seen('health', 'insulin') + '.';
+    return 'Selvfølgelig! Her er et utkast til henvisningsbrevet:\n\nHenvisning\n\n' +
+      (details ? details + '\n\n' : '') + about + ' ' + status +
+      '\n\nDet bes om vurdering og videre oppfølging.\n\nMed vennlig hilsen\n[Henvisende lege]\n\n' +
+      'Hvis du forteller meg årsaken til henvisningen og hvem den skal til, kan jeg gjøre brevet mer målrettet.';
+  }
+  function doSend() {
+    if (!S.length) return;
+    closeCard(); closeMenu();
+    var phSet = {}, raw = 0;
+    var text = S.map(function (s) {
+      if (s.rephrased) return s.re;
+      return s.parts.map(function (p) {
+        if (!isF(p)) return p;
+        if (p.hidden) { var t = ph(p.cat, p.value); phSet[t] = 1; return t; }
+        raw++; return p.value;
+      }).join('');
+    }).join('').trim();
+    var answer = buildAnswer();
+    sent = { text: text, tokens: answer.split(/(\s+)/), shown: 0, nPh: Object.keys(phSet).length, nRaw: raw };
+    S = []; history = []; ignored.clear();
+    renderAll(); startStream();
+    say('Message sent');
+  }
+  function startStream() {
+    clearInterval(streamTimer);
+    if (reduce) { sent.shown = sent.tokens.length; renderThread(); return; }
+    streamTimer = setInterval(function () {
+      sent.shown = Math.min(sent.tokens.length, sent.shown + 2);
+      renderThread();
+      if (sent.shown >= sent.tokens.length) { clearInterval(streamTimer); say('Answer complete'); }
+    }, 45);
+  }
+  function reset() {
+    clearInterval(streamTimer); clearTimeout(rephTimer); closeCard(); closeMenu();
+    vault = newVault(); ignored.clear(); history = []; sent = null;
+    S = fresh(); renderAll(); say('Demo reset');
+  }
+
+  /* ---------- events ---------- */
+  function fid(e) { var b = e.target.closest && e.target.closest('.f'); return b ? b.getAttribute('data-id') : null; }
+  field.addEventListener('mouseover', function (e) { var id = fid(e); if (id && !(card && card.pinned)) openCard(id, false); });
+  field.addEventListener('mouseout', function (e) { if (fid(e) && !(card && card.pinned)) scheduleClose(); });
+  field.addEventListener('focusin', function (e) { var id = fid(e); if (id && !(card && card.pinned)) openCard(id, false); });
+  field.addEventListener('click', function (e) {
+    if (e.target.closest('#paste')) { reset(); return; }
+    var id = fid(e); if (id) { if (card && card.fid !== id) { clearTimeout(rephTimer); card = null; } openCard(id, true); }
+  });
+  cardEl.addEventListener('mouseenter', cancelClose);
+  cardEl.addEventListener('mouseleave', function () { if (card && !card.pinned) scheduleClose(); });
+  cardEl.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b || !card) return;
+    var a = b.getAttribute('data-act');
+    if (a === 'hide') doHide(card.fid);
+    else if (a === 'ignore') doIgnore(card.fid);
+    else if (a === 'rephrase') doRephrase();
+    else if (a === 'accept') doAccept();
+    else if (a === 'reject' || a === 'cancel') { clearTimeout(rephTimer); card.mode = 'default'; drawCard(); }
+  });
+  gtab.addEventListener('click', function () {
+    var open = gmenu.hidden;
+    gmenu.hidden = !open; gtab.setAttribute('aria-expanded', String(open));
+    if (open) closeCard();
+  });
+  $('hideAll').addEventListener('click', doHideAll);
+  $('undo').addEventListener('click', doUndo);
+  $('send').addEventListener('click', doSend);
+  $('reset').addEventListener('click', reset);
+  document.addEventListener('click', function (e) {
+    var path = e.composedPath ? e.composedPath() : [];
+    var inCard = path.some(function (n) { return n && (n.id === 'card' || (n.classList && n.classList.contains('f'))); });
+    var inBar = path.some(function (n) { return n && n.id === 'gbar'; });
+    if (!inCard) closeCard();
+    if (!inBar) closeMenu();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var id = card && card.fid;
+    var hadMenu = !gmenu.hidden;
+    closeCard(); closeMenu();
+    if (id) { var b = field.querySelector('.f[data-id="' + id + '"]'); if (b) b.focus(); }
+    else if (hadMenu) gtab.focus();
+  });
+  window.addEventListener('resize', placeCard);
+
+  reset();
+  say('');
+})();
+</script>
+
+<script>
+/* Demo recording plays at 1.3x. */
+(function () {
+  var v = document.querySelector('.video video');
+  v.defaultPlaybackRate = 1.3;
+  v.playbackRate = 1.3;
+})();
+
+/* Hero example: the Card's Hide, Rephrase and Ignore buttons. */
+(function () {
+  var card = document.getElementById('heroCard'), field = document.getElementById('heroField');
+  var count = document.getElementById('heroCount'), status = document.getElementById('heroStatus');
+  var KARI = '<span class="ul amber">Kari</span>';
+  var REST = ' ' + KARI + ', 34 år, jobber som lærer i <span class="ul teal">Bærum</span> og har <span class="ul teal">diabetes</span> type 1.';
+  var NEW_SENTENCE = 'Pasienten er en kvinne i 30-årene.';
+  var HEAD = '<span class="catname ul red">Fødselsnummer</span>';
+  var timer = null;
+
+  function first(fnr) { return 'Pasienten heter ' + '<span class="ul amber">Kari Nordmann</span>, fnr ' + fnr + '.'; }
+  function btn(act, cls, label) { return '<button class="btn ' + cls + ' btn-sm" type="button" data-a="' + act + '">' + label + '</button>'; }
+  function done(text) { return '<p class="note">' + text + '</p><hr class="tear"><div class="acts">' + btn('reset', 'btn-secondary', 'Undo') + '</div>'; }
+
+  var VIEWS = {
+    start: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', card: HEAD +
+      '<div class="val-row"><span class="val">01019000083</span><span class="stamp">hide as <b>[FNR_1]</b></span></div><hr class="tear"><div class="acts">' +
+      btn('hide', 'btn-primary', 'Hide') + btn('rephrase', 'btn-secondary', 'Rephrase') + btn('ignore', 'btn-text', 'Ignore') + '</div>' },
+    hidden: { n: 4, fnr: '[FNR_1]', say: 'Hidden as [FNR_1]', card: HEAD + done('<span class="ph">[FNR_1]</span>') },
+    ignored: { n: 4, fnr: '01019000083', say: 'Ignored', card: HEAD + done('Ignored in this message. It will not be underlined again until you send.') },
+    working: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', say: 'Rephrasing', card: HEAD +
+      '<hr class="tear"><p class="note">Rephrasing…</p><div class="acts" style="margin-top:12px">' + btn('reject', 'btn-text', 'Cancel') + '</div>' },
+    preview: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', say: 'New sentence ready: ' + NEW_SENTENCE, card: HEAD +
+      '<hr class="tear"><p class="note">New sentence</p><p class="sunk">' + NEW_SENTENCE + '</p><div class="acts">' +
+      btn('accept', 'btn-primary', 'Accept') + btn('reject', 'btn-secondary', 'Reject') + '</div>' },
+    accepted: { n: 3, whole: NEW_SENTENCE, say: 'Sentence rephrased', card: HEAD + done('Rephrased. The name and the number are gone from the sentence.') }
+  };
+  var NEXT = { hide: 'hidden', ignore: 'ignored', rephrase: 'working', accept: 'accepted', reject: 'start', reset: 'start' };
+
+  function draw(name) {
+    var v = VIEWS[name];
+    clearTimeout(timer);
+    card.innerHTML = v.card;
+    field.innerHTML = (v.whole || first(v.fnr)) + REST;
+    count.textContent = v.n;
+    status.textContent = v.say || '';
+    if (name === 'working') timer = setTimeout(function () { draw('preview'); focusFirst(); }, 900);
+  }
+  function focusFirst() { var b = card.querySelector('button'); if (b && card.contains(document.activeElement) || b && document.activeElement === document.body) b.focus({ preventScroll: true }); }
+  card.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-a]');
+    if (!b) return;
+    draw(NEXT[b.getAttribute('data-a')]);
+    var f = card.querySelector('button'); if (f) f.focus({ preventScroll: true });
+  });
+  draw('start');
+  status.textContent = '';
+})();
+
+/* Popup illustration, copy buttons. Everything stays in this page. */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var DEMO_NOTE = 'Hei! Kan du hjelpe meg å skrive et henvisningsbrev? Pasienten heter Kari Nordmann, fnr 01019000083. Kari, 34 år, jobber som lærer i Bærum og har diabetes type 1. Hun er sykemeldt og bruker insulin.';
+
+  /* ---------- popup views ---------- */
+  var pop = $('pop'), segBtns = document.querySelectorAll('[data-show]');
+  function show(v) {
+    pop.querySelectorAll('[data-view]').forEach(function (el) { el.hidden = el.getAttribute('data-view') !== v; });
+    segBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-show') === v)); });
+    var down = v === 'down';
+    $('badge').hidden = !down;
+    $('popStatus').textContent = down ? 'Engine down' : 'Engine running';
+    $('popStatus').classList.toggle('down', down);
+  }
+  segBtns.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-show')); }); });
+  pop.addEventListener('click', function (e) {
+    var go = e.target.closest('[data-go]');
+    if (go) { show(go.getAttribute('data-go')); return; }
+    var rm = e.target.closest('[data-rm]');
+    if (rm) { rm.closest('li').remove(); }
+  });
+
+  var sw = $('siteSwitch');
+  sw.addEventListener('click', function () {
+    var on = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', String(on));
+    $('siteState').textContent = on ? 'On' : 'Off';
+  });
+
+  /* ---------- Domains and your words ---------- */
+  var mine = ['Prosjekt Nordlys', 'Avdeling 4B', 'Kunde K-4471'];
+  var builtIn = {
+    health: 'Built-in Domain. Finds the Base Categories plus diagnoses, medicines and terms like sykemeldt. Its word list is fixed.',
+    education: 'Built-in Domain. Finds the Base Categories plus terms like IOP, fravær and sakkyndig vurdering. Its word list is fixed.',
+    courts: 'Built-in Domain. Finds the Base Categories plus terms like lukkede dører, utkast til dom and samvær. Its word list is fixed.',
+    industrial: 'Built-in Domain. Finds the Base Categories plus machine makers and production capacity. Its word list is fixed.',
+    religious: 'Built-in Domain. Finds the Base Categories plus terms like sjelesorg and forbønn. Its word list is fixed.',
+    free: 'Built-in Domain. Finds the Base Categories only: IDs, cards, secrets, names and contact data.'
+  };
+  function drawWords() {
+    var box = $('words'); box.textContent = '';
+    mine.forEach(function (w, i) {
+      var c = document.createElement('span'); c.className = 'wchip';
+      c.appendChild(document.createTextNode(w));
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove ' + w);
+      x.addEventListener('click', function () { mine.splice(i, 1); drawWords(); });
+      c.appendChild(x); box.appendChild(c);
+    });
+  }
+  $('addWord').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('wordIn').value.trim();
+    if (v && mine.indexOf(v) < 0) { mine.push(v); drawWords(); }
+    $('wordIn').value = '';
+  });
+  $('domSel').addEventListener('change', function () {
+    var v = this.value, isMine = v === 'mine';
+    $('wordsBox').hidden = !isMine;
+    $('builtinNote').hidden = isMine;
+    $('builtinNote').textContent = builtIn[v] || '';
+  });
+  $('newDom').addEventListener('click', function () {
+    var sel = $('domSel');
+    var n = sel.querySelectorAll('option[data-new]').length + 1;
+    var o = document.createElement('option');
+    o.value = 'mine'; o.textContent = 'New Domain ' + n; o.setAttribute('data-new', '');
+    sel.appendChild(o); sel.value = 'mine'; o.selected = true;
+    mine = []; drawWords();
+    sel.dispatchEvent(new Event('change'));
+    $('wordIn').focus();
+  });
+  $('addSite').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('siteIn').value.trim().toLowerCase();
+    if (!v) return;
+    var li = document.createElement('li');
+    var s = document.createElement('span'); s.className = 'mono'; s.textContent = v === '*' ? '* (all sites)' : v;
+    var b = document.createElement('button'); b.className = 'btn btn-text btn-sm'; b.type = 'button'; b.textContent = 'Remove'; b.setAttribute('data-rm', '');
+    li.appendChild(s); li.appendChild(b); $('sites').appendChild(li);
+    $('siteIn').value = '';
+  });
+  drawWords();
+
+  /* ---------- copy buttons ---------- */
+  function copy(text, btn) {
+    var done = function (ok) {
+      var old = btn.getAttribute('data-label') || btn.textContent;
+      btn.setAttribute('data-label', old);
+      btn.textContent = ok ? 'Copied' : 'Select and copy';
+      setTimeout(function () { btn.textContent = old; }, 1600);
+    };
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback(text)); });
+      } else { done(fallback(text)); }
+    } catch (err) { done(false); }
+  }
+  function fallback(text) {
+    try {
+      var t = document.createElement('textarea');
+      t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(t);
+      return ok;
+    } catch (err) { return false; }
+  }
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () { copy($(b.getAttribute('data-copy')).textContent, b); });
+  });
+  $('copyNote').addEventListener('click', function () { copy(DEMO_NOTE, this); });
+})();
+</script>
+
+</body></html>

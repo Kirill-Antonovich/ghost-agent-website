@@ -468,7 +468,7 @@ footer .brand svg { width: 28px; height: 28px; }
       <a href="#compare">Compare</a>
       <a href="#install">Install</a>
       <a href="#roadmap">Roadmap</a>
-      <a class="btn btn-primary btn-sm" href="#demo">Try the demo</a>
+      <a class="btn btn-primary btn-sm" href="#try">Try the demo</a>
     </nav>
   </div>
 </header>
@@ -481,10 +481,10 @@ footer .brand svg { width: 28px; height: 28px; }
       <h1>Catch sensitive data before the AI sees it.</h1>
       <p class="lead">Ghost Agent underlines personal and confidential data while you type or paste into an AI chat. Hide it or rephrase it before you press Send. All the checking runs on your own machine.</p>
       <div class="cta">
-        <a class="btn btn-primary" href="#demo">Try the demo</a>
+        <a class="btn btn-primary" href="#try">Try the demo</a>
         <a class="btn btn-secondary" href="#install">Install it</a>
       </div>
-      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in any Chromium browser, on any site, with five Domains.</span></p>
+      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in any Chromium browser, on any site. Besides names, IDs and contact details, it recognises sensitive terms from health, education, courts, industry and religious life.</span></p>
     </div>
     <div class="mock" style="position:relative" role="group" aria-label="Interactive example of Ghost Agent in a message field">
       <div style="min-height:152px;display:grid;align-items:end"><div class="card" id="heroCard"></div></div>
@@ -513,7 +513,7 @@ footer .brand svg { width: 28px; height: 28px; }
       </video>
       <figcaption class="muted sm" id="videoCap">Recorded with the synthetic demo note. No real patient data was used.</figcaption>
     </figure>
-    <div class="try-head">
+    <div class="try-head" id="try">
       <h3>Now try it yourself</h3>
       <p class="lead">A nurse wants an AI chat to help write a referral letter, and pastes in a patient note with a name, a fødselsnummer and a diagnosis. Sent as it is, that is a GDPR breach. This simulated field already holds the note: hover or tap an underline, hide a few values, rephrase a sentence, then send.</p>
     </div>
@@ -718,7 +718,7 @@ footer .brand svg { width: 28px; height: 28px; }
       </div>
       <ul class="pop-feats">
         <li><strong>A switch per site</strong><span class="muted sm">Turn Ghost Agent off on a site you trust, and back on with one click.</span></li>
-        <li><strong>Domains</strong><span class="muted sm">Choose from five Domains. Free finds the Base Categories, and Health adds diagnoses and medicines. Make your own with the plus button.</span></li>
+        <li><strong>Domains</strong><span class="muted sm">Free finds the Base Categories. Health, Education, Courts, Industrial and Religious each add the sensitive terms of that sector. Make your own with the plus button.</span></li>
         <li><strong>Your own words</strong><span class="muted sm">Add client names, project code names or places the Detectors can't know. They get a teal underline, like Domain words.</span></li>
         <li><strong>Engine status</strong><span class="muted sm">If the local Engine isn't running, the icon shows a red <b>!</b> and the popup tells you how to start it.</span></li>
       </ul>
@@ -755,6 +755,10 @@ footer .brand svg { width: 28px; height: 28px; }
                 <option value="mine" selected>My clinic</option>
                 <option value="health">Health (built-in)</option>
                 <option value="free">Free (built-in)</option>
+                <option value="education">Education (built-in)</option>
+                <option value="courts">Courts (built-in)</option>
+                <option value="industrial">Industrial (built-in)</option>
+                <option value="religious">Religious (built-in)</option>
               </select>
               <button class="ibtn" type="button" aria-label="New Domain" id="newDom"><svg aria-hidden="true"><use href="#plus"/></svg></button>
             </div>
@@ -941,7 +945,7 @@ footer .brand svg { width: 28px; height: 28px; }
   <div class="wrap">
     <div class="head">
       <h2>Where it goes next</h2>
-      <p class="lead">Version 1 works on every site, with five Domains. Restore comes next, then the desktop App for every program.</p>
+      <p class="lead">Version 1 works on every site and covers five sectors. Restore comes next, then the desktop App for every program.</p>
     </div>
     <ol class="track">
       <li class="stop done">
@@ -998,7 +1002,7 @@ footer .brand svg { width: 28px; height: 28px; }
     </div>
     <div class="maker-copy">
       <h2>Built by Marka</h2>
-      <p class="lead">Ghost Agent is built by Marka, a team at Oslo Sprint. We think people should be able to use AI at work without handing over the data they are trusted with.</p>
+      <p class="lead">Ghost Agent is built by Marka, a team at Oslo Sprint. Nobody should have to choose between getting help from AI and protecting the people whose data they handle.</p>
       <div class="facts">
         <div><span class="muted sm">Event</span><span>Oslo Sprint, 6–8 November 2026</span></div>
         <div><span class="muted sm">Repository</span><a href="https://github.com/dimassolt/marka_mvp_2">github.com/dimassolt/marka_mvp_2</a></div>
@@ -1022,7 +1026,7 @@ footer .brand svg { width: 28px; height: 28px; }
     person_name: { name: 'Person name', prefix: 'PERSON', cls: 'amber' },
     phone: { name: 'Phone number', prefix: 'PHONE', cls: 'amber' },
     email: { name: 'Email address', prefix: 'EMAIL', cls: 'amber' },
-    place: { name: 'Place', prefix: 'PLACE', cls: 'amber' },
+    place: { name: 'Place', prefix: 'DATA', cls: 'teal' },
     health: { name: 'Health', prefix: 'HEALTH', cls: 'teal' }
   };
   var $ = function (id) { return document.getElementById(id); };
@@ -1320,7 +1324,7 @@ footer .brand svg { width: 28px; height: 28px; }
   var card = document.getElementById('heroCard'), field = document.getElementById('heroField');
   var count = document.getElementById('heroCount'), status = document.getElementById('heroStatus');
   var KARI = '<span class="ul amber">Kari</span>';
-  var REST = ' ' + KARI + ', 34 år, jobber som lærer i <span class="ul amber">Bærum</span> og har <span class="ul teal">diabetes</span> type 1.';
+  var REST = ' ' + KARI + ', 34 år, jobber som lærer i <span class="ul teal">Bærum</span> og har <span class="ul teal">diabetes</span> type 1.';
   var NEW_SENTENCE = 'Pasienten er en kvinne i 30-årene.';
   var HEAD = '<span class="catname ul red">Fødselsnummer</span>';
   var timer = null;
@@ -1403,6 +1407,10 @@ footer .brand svg { width: 28px; height: 28px; }
   var mine = ['Prosjekt Nordlys', 'Avdeling 4B', 'Kunde K-4471'];
   var builtIn = {
     health: 'Built-in Domain. Finds the Base Categories plus diagnoses, medicines and terms like sykemeldt. Its word list is fixed.',
+    education: 'Built-in Domain. Finds the Base Categories plus terms like IOP, fravær and sakkyndig vurdering. Its word list is fixed.',
+    courts: 'Built-in Domain. Finds the Base Categories plus terms like lukkede dører, utkast til dom and samvær. Its word list is fixed.',
+    industrial: 'Built-in Domain. Finds the Base Categories plus machine makers and production capacity. Its word list is fixed.',
+    religious: 'Built-in Domain. Finds the Base Categories plus terms like sjelesorg and forbønn. Its word list is fixed.',
     free: 'Built-in Domain. Finds the Base Categories only: IDs, cards, secrets, names and contact data.'
   };
   function drawWords() {
