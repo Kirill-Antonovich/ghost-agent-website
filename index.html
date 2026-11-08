@@ -1349,11 +1349,12 @@ footer .brand svg { width: 28px; height: 28px; }
   }
   function startStream() {
     clearInterval(streamTimer);
-    if (reduce) { sent.shown = sent.tokens.length; renderThread(); wrap.hidden = true; return; }
+    wrap.hidden = true;
+    if (reduce) { sent.shown = sent.tokens.length; renderThread(); return; }
     streamTimer = setInterval(function () {
       sent.shown = Math.min(sent.tokens.length, sent.shown + 2);
       renderThread();
-      if (sent.shown >= sent.tokens.length) { clearInterval(streamTimer); wrap.hidden = true; say('Answer complete'); }
+      if (sent.shown >= sent.tokens.length) { clearInterval(streamTimer); say('Answer complete'); }
     }, 45);
   }
   function reset() {
