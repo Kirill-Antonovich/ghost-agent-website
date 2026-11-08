@@ -153,11 +153,11 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .empty { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; color: var(--color-muted); line-height: 1.4; }
 .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px 12px; }
 .foot .hint { color: var(--color-muted); font-size: .9rem; }
-.gbar { position: absolute; right: 112px; top: calc(100% - 1px); }
+.gbar { position: absolute; right: 16px; bottom: calc(100% - 1px); }
 .gtab {
   display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 13px; cursor: pointer;
   background: var(--color-paper-2); color: var(--color-ink); font: 500 .92rem/1 var(--font-body);
-  border: 1px solid var(--color-ink); border-top: 0; border-left: 1.5px dashed var(--color-stamp); border-radius: 0 0 8px 8px;
+  border: 1px solid var(--color-ink); border-bottom: 0; border-left: 1.5px dashed var(--color-stamp); border-radius: 8px 8px 0 0;
   transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
 }
 .gtab .n { font-family: var(--font-mono); font-weight: 500; color: var(--color-stamp); }
@@ -183,6 +183,7 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .hero-copy .lead { max-width: 33rem; font-size: 1.22rem; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .mock { display: grid; gap: 12px; padding-bottom: 44px; min-width: 0; }
+@media (max-width: 560px) { .mock { gap: 42px; } }
 .mock .card { margin-left: 22px; }
 .mock .field { min-height: 0; }
 .byline { display: inline-flex; align-items: center; gap: 10px; }
@@ -232,7 +233,7 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .msg.ai { background: var(--color-paper-2); border: 1px solid var(--rule); }
 .msg .who { font-size: .85rem; color: var(--color-muted); margin-bottom: 4px; }
 .msg p { white-space: pre-wrap; line-height: 1.75; overflow-wrap: anywhere; }
-.fieldwrap { position: relative; padding-bottom: 48px; }
+.fieldwrap { position: relative; padding-top: 36px; }
 .fieldwrap > .card { position: absolute; z-index: 7; }
 
 /* table */
@@ -483,38 +484,17 @@ footer .brand svg { width: 28px; height: 28px; }
         <a class="btn btn-primary" href="#demo">Try the demo</a>
         <a class="btn btn-secondary" href="#install">Install it</a>
       </div>
-      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in Opera on any site, with a Health Domain.</span></p>
+      <p class="muted sm byline"><svg aria-hidden="true"><use href="#marka"/></svg><span>Built by Marka at Oslo Sprint, 6–8 November 2026. Version 1 runs in any Chromium browser, on any site, with five Domains.</span></p>
     </div>
-    <div class="mock" role="group" aria-label="Interactive example of Ghost Agent in a message field">
-      <div class="card" id="heroCard" style="min-height:152px"></div>
+    <div class="mock" style="position:relative" role="group" aria-label="Interactive example of Ghost Agent in a message field">
+      <div style="min-height:152px;display:grid;align-items:end"><div class="card" id="heroCard"></div></div>
       <div class="box">
         <p class="field" id="heroField"></p>
         <div class="foot"><span class="hint">Message the AI</span><span class="btn btn-primary btn-sm" aria-hidden="true">Send</span></div>
         <div class="gbar" aria-hidden="true"><span class="gtab"><span class="n" id="heroCount">5</span> to check</span></div>
       </div>
+      <button class="btn btn-text btn-sm" type="button" id="heroReset" hidden style="position:absolute;left:0;bottom:0;padding-left:0">Reset example</button>
       <p class="sr" role="status" id="heroStatus"></p>
-    </div>
-  </div>
-</section>
-
-<!-- PROBLEM -->
-<section class="sec" id="problem">
-  <div class="wrap">
-    <div class="head">
-      <h2>A nurse pastes a patient note into an AI chat.</h2>
-      <p class="lead">She wants help writing a letter. The note holds the patient's name, fødselsnummer and diagnosis. That is a GDPR breach, and nothing on her screen warned her.</p>
-    </div>
-    <div class="pair">
-      <div class="panel">
-        <h3>Without Ghost Agent</h3>
-        <p class="txt">Pasienten heter <span class="hot">Kari Nordmann</span>, fnr <span class="hot">01019000083</span>. <span class="hot">Kari</span>, 34 år, jobber som lærer i <span class="hot">Bærum</span> og har <span class="hot">diabetes</span> type 1. Hun er <span class="hot">sykemeldt</span> og bruker <span class="hot">insulin</span>.</p>
-        <p class="muted sm">The AI service receives every highlighted value as written.</p>
-      </div>
-      <div class="panel">
-        <h3>With Ghost Agent</h3>
-        <p class="txt">Pasienten heter <span class="ph">[PERSON_1]</span>, fnr <span class="ph">[FNR_1]</span>. <span class="ph">[PERSON_1]</span>, 34 år, jobber som lærer i <span class="ph">[PLACE_1]</span> og har <span class="ph">[HEALTH_1]</span> type 1. Hun er <span class="ph">[HEALTH_2]</span> og bruker <span class="ph">[HEALTH_3]</span>.</p>
-        <p class="muted sm">The AI still gets the structure of the note.</p>
-      </div>
     </div>
   </div>
 </section>
@@ -527,7 +507,7 @@ footer .brand svg { width: 28px; height: 28px; }
       <p class="lead">A short screen recording of the real extension on chatgpt.com, with the Engine running on the same computer. The demo note is pasted, the names and the fødselsnummer are hidden, and the AI writes its letter around the Placeholders.</p>
     </div>
     <figure class="video">
-      <video controls playsinline preload="metadata" poster="assets/demo-poster.jpg" width="1400" height="680" aria-describedby="videoCap">
+      <video autoplay muted loop playsinline preload="auto" poster="assets/demo-poster.jpg" width="1400" height="680" aria-describedby="videoCap">
         <source src="assets/demo.mp4" type="video/mp4">
         <p>Your browser can't play this video. <a href="assets/demo.mp4">Download the recording</a> instead.</p>
       </video>
@@ -535,7 +515,7 @@ footer .brand svg { width: 28px; height: 28px; }
     </figure>
     <div class="try-head">
       <h3>Now try it yourself</h3>
-      <p class="lead">This is a simulated field with the note already pasted in. Hover or tap an underline, hide a few values, rephrase a sentence, then send.</p>
+      <p class="lead">A nurse wants an AI chat to help write a referral letter, and pastes in a patient note with a name, a fødselsnummer and a diagnosis. Sent as it is, that is a GDPR breach. This simulated field already holds the note: hover or tap an underline, hide a few values, rephrase a sentence, then send.</p>
     </div>
     <div class="demo-top">
       <p class="muted sm">Simulated demo. All names and numbers are synthetic; the fødselsnummer has a valid checksum and belongs to no one.</p>
@@ -556,9 +536,7 @@ footer .brand svg { width: 28px; height: 28px; }
           <div class="gbar" id="gbar" hidden>
             <div class="gmenu" id="gmenu" hidden>
               <button type="button" id="hideAll">Hide all</button>
-              <div class="rule"></div>
-              <button type="button" id="undo">Undo</button>
-            </div>
+              </div>
             <button class="gtab" type="button" id="gtab" aria-expanded="false" aria-haspopup="true"><span class="n" id="gcount">7</span> to check</button>
           </div>
         </div>
@@ -615,13 +593,13 @@ footer .brand svg { width: 28px; height: 28px; }
         <div class="step-copy">
           <span class="step-n" aria-hidden="true">3</span>
           <h3>Hide</h3>
-          <p>Hide swaps one value for a typed, numbered Placeholder. The same value always gets the same Placeholder, so the AI can tell two people apart. Hide all does the whole field in one step, and Undo puts the text back.</p>
+          <p>Hide swaps one value for a typed, numbered Placeholder. The same value always gets the same Placeholder, so the AI can tell two people apart. Hide all does the whole field in one step.</p>
         </div>
         <div class="vis">
           <div class="swap"><span>fnr <span class="ul red">01019000083</span></span><span class="arrow" aria-hidden="true">→</span><span>fnr [FNR_1]</span></div>
           <div class="gstatic">
             <div class="gbar">
-              <div class="gmenu" role="presentation"><button type="button" tabindex="-1">Hide all (6)</button><div class="rule"></div><button type="button" tabindex="-1">Undo · Hide [FNR_1]</button></div>
+              <div class="gmenu" role="presentation"><button type="button" tabindex="-1">Hide all (6)</button></div>
               <span class="gtab" aria-expanded="true"><span class="n">6</span> to check</span>
             </div>
           </div>
@@ -740,7 +718,7 @@ footer .brand svg { width: 28px; height: 28px; }
       </div>
       <ul class="pop-feats">
         <li><strong>A switch per site</strong><span class="muted sm">Turn Ghost Agent off on a site you trust, and back on with one click.</span></li>
-        <li><strong>Domains</strong><span class="muted sm">Free finds the Base Categories. Health adds diagnoses and medicines. Make your own with the plus button.</span></li>
+        <li><strong>Domains</strong><span class="muted sm">Choose from five Domains. Free finds the Base Categories, and Health adds diagnoses and medicines. Make your own with the plus button.</span></li>
         <li><strong>Your own words</strong><span class="muted sm">Add client names, project code names or places the Detectors can't know. They get a teal underline, like Domain words.</span></li>
         <li><strong>Engine status</strong><span class="muted sm">If the local Engine isn't running, the icon shows a red <b>!</b> and the popup tells you how to start it.</span></li>
       </ul>
@@ -898,7 +876,7 @@ footer .brand svg { width: 28px; height: 28px; }
         <h3 style="font-size:1.15rem">What you need</h3>
         <ul>
           <li><span>Engine</span><span>Python with <span class="mono">uv</span></span></li>
-          <li><span>Browser</span><span>A Chromium browser. Tested in Opera.</span></li>
+          <li><span>Browser</span><span>Any Chromium browser</span></li>
           <li><span>Sites</span><span>Any site. Plain textarea fields are not scanned yet.</span></li>
           <li><span>Network</span><span>None at run time. The Engine listens on <span class="mono">127.0.0.1:8765</span> only.</span></li>
         </ul>
@@ -963,7 +941,7 @@ footer .brand svg { width: 28px; height: 28px; }
   <div class="wrap">
     <div class="head">
       <h2>Where it goes next</h2>
-      <p class="lead">Version 1 works on every site, with one built-in sector: Health. Restore and a School Domain come next, then the desktop App for every program.</p>
+      <p class="lead">Version 1 works on every site, with five Domains. Restore comes next, then the desktop App for every program.</p>
     </div>
     <ol class="track">
       <li class="stop done">
@@ -975,7 +953,7 @@ footer .brand svg { width: 28px; height: 28px; }
           <li>Base and Health Detectors with an overlap rule</li>
           <li>GLiNER Detector for surnames, places and addresses</li>
           <li>Underlines, the Card and the Ghost bar</li>
-          <li>Hide, Hide all, Ignore, Undo and the Vault</li>
+          <li>Hide, Hide all, Ignore and the Vault</li>
           <li>Rephrase with a local model</li>
           <li>An engine-down badge</li>
         </ul>
@@ -983,11 +961,10 @@ footer .brand svg { width: 28px; height: 28px; }
       <li class="stop next">
         <span class="pin" aria-hidden="true"></span>
         <p class="when">Next</p>
-        <h3>Restore and more sectors</h3>
+        <h3>Restore and wider coverage</h3>
         <ul>
           <li>Restore: real values back in the AI's answer, on your screen only</li>
           <li>Support for textarea fields</li>
-          <li>A School Domain</li>
         </ul>
       </li>
       <li class="stop later">
@@ -1052,7 +1029,7 @@ footer .brand svg { width: 28px; height: 28px; }
   var field = $('field'), wrap = $('wrap'), cardEl = $('card'), gbar = $('gbar'), gtab = $('gtab'), gmenu = $('gmenu');
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var S = [], ignored = new Set(), history = [], vault, card = null, sent = null;
+  var S = [], ignored = new Set(), vault, card = null, sent = null;
   var nextId = 1, streamTimer = null, rephTimer = null, closeTimer = null;
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -1125,9 +1102,6 @@ footer .brand svg { width: 28px; height: 28px; }
     gbar.hidden = n === 0;
     $('gcount').textContent = n;
     $('hideAll').textContent = 'Hide all (' + n + ')';
-    var u = $('undo');
-    u.disabled = !history.length;
-    u.textContent = history.length ? 'Undo · ' + history[history.length - 1].label : 'Undo';
     if (n === 0) closeMenu();
   }
   function renderThread() {
@@ -1193,27 +1167,18 @@ footer .brand svg { width: 28px; height: 28px; }
   function closeMenu() { gmenu.hidden = true; gtab.setAttribute('aria-expanded', 'false'); }
 
   /* ---------- actions ---------- */
-  function push(label) { history.push({ snap: JSON.stringify(S), label: label }); }
   function doHide(id) {
     var r = findF(id); if (!r) return;
     var p = ph(r.f.cat, r.f.value);
-    push('Hide ' + p);
     r.f.hidden = true;
     closeCard(); renderAll();
     say('Hidden as ' + p);
   }
   function doHideAll() {
     var list = actives(); if (!list.length) return;
-    push('Hide all');
     list.forEach(function (x) { ph(x.f.cat, x.f.value); x.f.hidden = true; });
     closeCard(); closeMenu(); renderAll();
     say(list.length + ' values hidden');
-  }
-  function doUndo() {
-    var h = history.pop(); if (!h) return;
-    S = JSON.parse(h.snap);
-    closeCard(); closeMenu(); renderAll();
-    say('Undone');
   }
   function doIgnore(id) {
     var r = findF(id); if (!r) return;
@@ -1228,7 +1193,6 @@ footer .brand svg { width: 28px; height: 28px; }
   }
   function doAccept() {
     var r = card && findF(card.fid); if (!r) return;
-    push('Rephrase');
     r.s.rephrased = true;
     closeCard(); renderAll();
     say('Sentence rephrased');
@@ -1274,7 +1238,7 @@ footer .brand svg { width: 28px; height: 28px; }
     }).join('').trim();
     var answer = buildAnswer();
     sent = { text: text, tokens: answer.split(/(\s+)/), shown: 0, nPh: Object.keys(phSet).length, nRaw: raw };
-    S = []; history = []; ignored.clear();
+    S = []; ignored.clear();
     renderAll(); startStream();
     say('Message sent');
   }
@@ -1289,7 +1253,7 @@ footer .brand svg { width: 28px; height: 28px; }
   }
   function reset() {
     clearInterval(streamTimer); clearTimeout(rephTimer); closeCard(); closeMenu();
-    vault = newVault(); ignored.clear(); history = []; sent = null;
+    vault = newVault(); ignored.clear(); sent = null;
     S = fresh(); renderAll(); say('Demo reset');
   }
 
@@ -1319,7 +1283,6 @@ footer .brand svg { width: 28px; height: 28px; }
     if (open) closeCard();
   });
   $('hideAll').addEventListener('click', doHideAll);
-  $('undo').addEventListener('click', doUndo);
   $('send').addEventListener('click', doSend);
   $('reset').addEventListener('click', reset);
   document.addEventListener('click', function (e) {
@@ -1364,7 +1327,7 @@ footer .brand svg { width: 28px; height: 28px; }
 
   function first(fnr) { return 'Pasienten heter ' + '<span class="ul amber">Kari Nordmann</span>, fnr ' + fnr + '.'; }
   function btn(act, cls, label) { return '<button class="btn ' + cls + ' btn-sm" type="button" data-a="' + act + '">' + label + '</button>'; }
-  function done(text) { return '<p class="note">' + text + '</p><hr class="tear"><div class="acts">' + btn('reset', 'btn-secondary', 'Undo') + '</div>'; }
+  function done(text) { return '<p class="note">' + text + '</p>'; }
 
   var VIEWS = {
     start: { n: 5, fnr: '<span class="ul red hov">01019000083</span>', card: HEAD +
@@ -1379,7 +1342,7 @@ footer .brand svg { width: 28px; height: 28px; }
       btn('accept', 'btn-primary', 'Accept') + btn('reject', 'btn-secondary', 'Reject') + '</div>' },
     accepted: { n: 3, whole: NEW_SENTENCE, say: 'Sentence rephrased', card: HEAD + done('Rephrased. The name and the number are gone from the sentence.') }
   };
-  var NEXT = { hide: 'hidden', ignore: 'ignored', rephrase: 'working', accept: 'accepted', reject: 'start', reset: 'start' };
+  var NEXT = { hide: 'hidden', ignore: 'ignored', rephrase: 'working', accept: 'accepted', reject: 'start' };
 
   function draw(name) {
     var v = VIEWS[name];
@@ -1387,6 +1350,7 @@ footer .brand svg { width: 28px; height: 28px; }
     card.innerHTML = v.card;
     field.innerHTML = (v.whole || first(v.fnr)) + REST;
     count.textContent = v.n;
+    document.getElementById('heroReset').hidden = !/^(hidden|ignored|accepted)$/.test(name);
     status.textContent = v.say || '';
     if (name === 'working') timer = setTimeout(function () { draw('preview'); focusFirst(); }, 900);
   }
@@ -1395,7 +1359,11 @@ footer .brand svg { width: 28px; height: 28px; }
     var b = e.target.closest('[data-a]');
     if (!b) return;
     draw(NEXT[b.getAttribute('data-a')]);
-    var f = card.querySelector('button'); if (f) f.focus({ preventScroll: true });
+    var f = card.querySelector('button') || document.getElementById('heroReset'); f.focus({ preventScroll: true });
+  });
+  document.getElementById('heroReset').addEventListener('click', function () {
+    draw('start');
+    card.querySelector('button').focus({ preventScroll: true });
   });
   draw('start');
   status.textContent = '';
